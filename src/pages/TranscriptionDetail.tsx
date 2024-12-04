@@ -3,16 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import TranscriptionHeader from "@/components/transcription/TranscriptionHeader";
 import TranscriptionTable from "@/components/transcription/TranscriptionTable";
-import jsPDF from "jspdf";
-import * as XLSX from "xlsx";
+import MeetingMinutesDisplay from "@/components/meeting/MeetingMinutesDisplay";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface Segment {
-  speaker: string;
-  text: string;
-  timestamp: string;
-}
+import { MeetingMinutes } from "@/types/meeting";
 
 const TranscriptionDetail = () => {
   const location = useLocation();
@@ -37,7 +31,28 @@ const TranscriptionDetail = () => {
   }
 
   const { segments: initialSegments, date } = location.state;
-  const [segments, setSegments] = useState<Segment[]>(initialSegments);
+  const [segments, setSegments] = useState(initialSegments);
+
+  // Create meeting minutes from segments
+  const meetingMinutes: MeetingMinutes = {
+    date: date,
+    startTime: segments[0]?.timestamp || "00:00",
+    endTime: segments[segments.length - 1]?.timestamp || "00:00",
+    location: "Virtual - Gravação de Áudio",
+    meetingTitle: "Reunião Transcrita",
+    organizer: "Sistema de Transcrição",
+    participants: Array.from(new Set(segments.map(s => s.speaker))).map(name => ({
+      name,
+    })),
+    agendaItems: [{
+      title: "Transcrição Automática",
+      discussion: segments.map(s => `${s.speaker}: ${s.text}`).join("\n"),
+    }],
+    actionItems: [],
+    summary: "Transcrição automática de áudio realizada pelo sistema.",
+    nextSteps: [],
+    author: "Sistema de Transcrição Automática",
+  };
 
   const exportToTxt = () => {
     const text = segments
@@ -105,10 +120,13 @@ const TranscriptionDetail = () => {
               onBack={() => navigate(-1)}
             />
             <div className="mt-4 sm:mt-6">
-              <TranscriptionTable
-                segments={segments}
-                onUpdateSegments={setSegments}
-              />
+              <MeetingMinutesDisplay minutes={meetingMinutes} />
+              <div className="mt-6">
+                <TranscriptionTable
+                  segments={segments}
+                  onUpdateSegments={setSegments}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
