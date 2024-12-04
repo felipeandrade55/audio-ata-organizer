@@ -4,7 +4,7 @@ interface VoiceProfile {
 }
 
 class VoiceIdentificationService {
-  private profiles: VoiceProfile[] = [];
+  public profiles: VoiceProfile[] = [];
 
   public addProfile(name: string, audioData: Float32Array) {
     this.profiles.push({
