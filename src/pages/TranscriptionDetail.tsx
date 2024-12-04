@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import TranscriptionHeader from "@/components/transcription/TranscriptionHeader";
 import TranscriptionTable from "@/components/transcription/TranscriptionTable";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Segment {
   speaker: string;
@@ -15,6 +16,24 @@ interface Segment {
 const TranscriptionDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!location.state) {
+      toast({
+        title: "Erro",
+        description: "Nenhuma transcrição encontrada. Redirecionando para a página inicial.",
+        variant: "destructive",
+      });
+      navigate("/");
+      return;
+    }
+  }, [location.state, navigate, toast]);
+
+  if (!location.state) {
+    return null;
+  }
+
   const { segments: initialSegments, date } = location.state;
   const [segments, setSegments] = useState<Segment[]>(initialSegments);
 
