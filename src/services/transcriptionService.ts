@@ -7,15 +7,15 @@ export const processTranscriptionResult = (result: any): TranscriptionSegment[] 
     const audioFeatures = new Float32Array(segment.tokens.length);
     const timestamp = segment.start * 1000; // Convertendo para milissegundos
     
-    let speaker = voiceIdentificationService.identifyMostSimilarSpeaker(audioFeatures, timestamp);
-    
     // Tenta extrair nome do texto do segmento
     const recognizedName = handleNameRecognition(segment.text);
     if (recognizedName) {
-      speaker = recognizedName;
       voiceIdentificationService.addProfile(recognizedName, audioFeatures);
     }
 
+    // Identifica o falante atual
+    const speaker = voiceIdentificationService.identifyMostSimilarSpeaker(audioFeatures, timestamp);
+    
     return {
       speaker,
       text: segment.text,

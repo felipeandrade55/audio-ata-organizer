@@ -7,8 +7,14 @@ interface VoiceProfile {
 class VoiceIdentificationService {
   public profiles: VoiceProfile[] = [];
   private speakerChangeThreshold = 2000; // 2 segundos em milissegundos
+  private defaultSpeaker = "Participante Desconhecido";
 
   public addProfile(name: string, audioData: Float32Array) {
+    // Não adiciona perfil se o nome estiver vazio ou for o padrão
+    if (!name || name === this.defaultSpeaker) {
+      return;
+    }
+
     // Verifica se já existe um perfil com este nome
     const existingProfile = this.profiles.find(p => p.name === name);
     if (!existingProfile) {
@@ -22,7 +28,13 @@ class VoiceIdentificationService {
 
   public identifyMostSimilarSpeaker(audioFeatures: Float32Array, timestamp: number): string {
     if (this.profiles.length === 0) {
-      return "Participante Desconhecido";
+      return this.defaultSpeaker;
+    }
+
+    // Se houver apenas um perfil, retorna ele
+    if (this.profiles.length === 1) {
+      this.profiles[0].lastSpeakTime = timestamp;
+      return this.profiles[0].name;
     }
 
     // Encontra o último falante
