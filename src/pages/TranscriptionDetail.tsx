@@ -4,9 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import TranscriptionHeader from "@/components/transcription/TranscriptionHeader";
 import TranscriptionTable from "@/components/transcription/TranscriptionTable";
 import MeetingMinutesDisplay from "@/components/meeting/MeetingMinutesDisplay";
+import MeetingMinutesEdit from "@/components/meeting/MeetingMinutesEdit";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MeetingMinutes } from "@/types/meeting";
+import { Edit2 } from "lucide-react";
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
@@ -15,6 +18,7 @@ const TranscriptionDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!location.state) {
@@ -44,7 +48,7 @@ const TranscriptionDetail = () => {
     meetingTitle: "Reunião Transcrita",
     organizer: "Sistema de Transcrição",
     participants: Array.from(new Set(segments.map(s => s.speaker))).map(name => ({
-      name: String(name), // Explicitly convert to string to fix type error
+      name: String(name),
     })),
     agendaItems: [{
       title: "Transcrição Automática",
@@ -54,6 +58,13 @@ const TranscriptionDetail = () => {
     summary: "Transcrição automática de áudio realizada pelo sistema.",
     nextSteps: [],
     author: "Sistema de Transcrição Automática",
+  };
+
+  const [currentMinutes, setCurrentMinutes] = useState<MeetingMinutes>(meetingMinutes);
+
+  const handleSave = (updatedMinutes: MeetingMinutes) => {
+    setCurrentMinutes(updatedMinutes);
+    setIsEditing(false);
   };
 
   const exportToTxt = () => {
@@ -122,7 +133,26 @@ const TranscriptionDetail = () => {
               onBack={() => navigate(-1)}
             />
             <div className="mt-4 sm:mt-6">
-              <MeetingMinutesDisplay minutes={meetingMinutes} />
+              <div className="flex justify-end mb-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditing(!isEditing)}
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  {isEditing ? "Cancelar Edição" : "Editar Ata"}
+                </Button>
+              </div>
+              
+              {isEditing ? (
+                <MeetingMinutesEdit
+                  minutes={currentMinutes}
+                  onSave={handleSave}
+                  onCancel={() => setIsEditing(false)}
+                />
+              ) : (
+                <MeetingMinutesDisplay minutes={currentMinutes} />
+              )}
+
               <div className="mt-6">
                 <TranscriptionTable
                   segments={segments}
