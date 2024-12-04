@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TranscriptionHeaderProps {
   date: string;
@@ -30,6 +31,7 @@ const TranscriptionHeader = ({
   const [date, setDate] = useState(initialDate);
   const [editingDate, setEditingDate] = useState(initialDate);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleSave = () => {
     setDate(editingDate);
@@ -41,18 +43,18 @@ const TranscriptionHeader = ({
   };
 
   return (
-    <div className="flex flex-row items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={onBack}>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+        <Button variant="ghost" onClick={onBack} className="px-0 sm:px-4">
           <ChevronLeft className="h-4 w-4" />
-          Voltar
+          <span className="ml-2">Voltar</span>
         </Button>
         {isEditing ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Input
               value={editingDate}
               onChange={(e) => setEditingDate(e.target.value)}
-              className="w-[200px]"
+              className="w-full sm:w-[200px]"
             />
             <Button size="sm" variant="ghost" onClick={handleSave}>
               <Save className="h-4 w-4" />
@@ -60,7 +62,9 @@ const TranscriptionHeader = ({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <CardTitle>Ata de Reunião - {date}</CardTitle>
+            <CardTitle className="text-base sm:text-lg">
+              {isMobile ? date : `Ata de Reunião - ${date}`}
+            </CardTitle>
             <Button
               size="sm"
               variant="ghost"
@@ -74,12 +78,12 @@ const TranscriptionHeader = ({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Download className="mr-2 h-4 w-4" />
             Exportar
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onExportTxt}>
             Exportar como TXT
           </DropdownMenuItem>

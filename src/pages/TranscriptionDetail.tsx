@@ -6,6 +6,7 @@ import TranscriptionTable from "@/components/transcription/TranscriptionTable";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Segment {
   speaker: string;
@@ -17,6 +18,7 @@ const TranscriptionDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!location.state) {
@@ -91,9 +93,9 @@ const TranscriptionDetail = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      <Card>
-        <CardContent className="pt-6">
+    <div className={`container mx-auto p-2 sm:p-4 ${isMobile ? 'max-w-full' : 'max-w-4xl'}`}>
+      <Card className="overflow-hidden">
+        <CardContent className="p-2 sm:p-6">
           <TranscriptionHeader
             date={date}
             onExportTxt={exportToTxt}
@@ -101,7 +103,7 @@ const TranscriptionDetail = () => {
             onExportExcel={exportToExcel}
             onBack={() => navigate(-1)}
           />
-          <div className="mt-6">
+          <div className="mt-4 sm:mt-6 overflow-x-auto">
             <TranscriptionTable
               segments={segments}
               onUpdateSegments={setSegments}

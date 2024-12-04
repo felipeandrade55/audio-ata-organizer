@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Segment {
   speaker: string;
@@ -27,6 +28,7 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
   const [editingSpeaker, setEditingSpeaker] = useState<number | null>(null);
   const [newSpeakerName, setNewSpeakerName] = useState("");
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleEditSpeaker = (index: number, currentName: string) => {
     setEditingSpeaker(index);
@@ -51,55 +53,59 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
   };
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Horário</TableHead>
-          <TableHead>Participante</TableHead>
-          <TableHead className="w-full">Fala</TableHead>
-          <TableHead className="w-[100px]">Ações</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {segments.map((segment, index) => (
-          <TableRow key={index}>
-            <TableCell>{segment.timestamp}</TableCell>
-            <TableCell>
-              {editingSpeaker === index ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={newSpeakerName}
-                    onChange={(e) => setNewSpeakerName(e.target.value)}
-                    className="w-[150px]"
-                  />
+    <div className="overflow-x-auto -mx-2 sm:mx-0">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-24 sm:w-32">Horário</TableHead>
+            <TableHead className="w-32 sm:w-40">Participante</TableHead>
+            <TableHead className="min-w-[200px]">Fala</TableHead>
+            <TableHead className="w-16 sm:w-20">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {segments.map((segment, index) => (
+            <TableRow key={index}>
+              <TableCell className="whitespace-nowrap">{segment.timestamp}</TableCell>
+              <TableCell>
+                {editingSpeaker === index ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newSpeakerName}
+                      onChange={(e) => setNewSpeakerName(e.target.value)}
+                      className="w-full min-w-[100px]"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleSaveSpeaker(index)}
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <span className="whitespace-nowrap">{segment.speaker}</span>
+                )}
+              </TableCell>
+              <TableCell className="max-w-[300px] sm:max-w-none">
+                <div className="break-words">{segment.text}</div>
+              </TableCell>
+              <TableCell>
+                {editingSpeaker !== index && (
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleSaveSpeaker(index)}
+                    onClick={() => handleEditSpeaker(index, segment.speaker)}
                   >
-                    <Save className="h-4 w-4" />
+                    <Edit2 className="h-4 w-4" />
                   </Button>
-                </div>
-              ) : (
-                segment.speaker
-              )}
-            </TableCell>
-            <TableCell>{segment.text}</TableCell>
-            <TableCell>
-              {editingSpeaker !== index && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleEditSpeaker(index, segment.speaker)}
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 
