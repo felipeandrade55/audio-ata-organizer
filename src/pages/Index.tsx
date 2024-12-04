@@ -1,17 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, Square } from "lucide-react";
+import { Mic, Square, ArrowRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 interface TranscriptionSegment {
   speaker: string;
@@ -20,6 +13,7 @@ interface TranscriptionSegment {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([]);
@@ -137,6 +131,26 @@ const Index = () => {
     });
   };
 
+  const getTotalDuration = () => {
+    if (transcriptionSegments.length === 0) return "0:00";
+    const lastSegment = transcriptionSegments[transcriptionSegments.length - 1];
+    return lastSegment.timestamp;
+  };
+
+  const getParticipantCount = () => {
+    const uniqueSpeakers = new Set(transcriptionSegments.map(segment => segment.speaker));
+    return uniqueSpeakers.size;
+  };
+
+  const viewFullTranscription = () => {
+    navigate("/transcription", {
+      state: {
+        segments: transcriptionSegments,
+        date: formatDate(new Date())
+      }
+    });
+  };
+
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <Card>
@@ -188,27 +202,29 @@ const Index = () => {
             )}
 
             {transcriptionSegments.length > 0 && (
-              <div className="w-full mt-4">
-                <h3 className="font-semibold mb-2">Transcrição da Reunião:</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Horário</TableHead>
-                      <TableHead>Participante</TableHead>
-                      <TableHead>Fala</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transcriptionSegments.map((segment, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{segment.timestamp}</TableCell>
-                        <TableCell>{segment.speaker}</TableCell>
-                        <TableCell>{segment.text}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <Card className="w-full mt-4">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Duração Total</p>
+                        <p className="text-lg font-semibold">{getTotalDuration()}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Participantes</p>
+                        <p className="text-lg font-semibold">{getParticipantCount()}</p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={viewFullTranscription}
+                      className="w-full"
+                    >
+                      Ver Transcrição Completa
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         </CardContent>
