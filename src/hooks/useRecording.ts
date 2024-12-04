@@ -6,6 +6,7 @@ import { handleNameRecognition } from "@/services/nameRecognitionService";
 import { useRecordingState } from "./useRecordingState";
 import { useTranscriptionHandler } from "./useTranscriptionHandler";
 import { MeetingMinutes } from "@/types/meeting";
+import { createAudioPreprocessor } from "@/services/audioPreprocessingService";
 
 interface UseRecordingProps {
   apiKey: string;
@@ -17,6 +18,7 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
   const { toast } = useToast();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const audioPreprocessorRef = useRef<ReturnType<typeof createAudioPreprocessor> | null>(null);
   const recordingState = useRecordingState();
 
   const {
@@ -57,15 +59,21 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
         await playIdentificationPrompt();
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
+      // Initialize audio preprocessor
+      audioPreprocessorRef.current = createAudioPreprocessor();
+
+      const rawStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 16000,
           channelCount: 1,
         }
       });
 
+      // Process the audio stream
+      const processedStream = await audioPreprocessorRef.current.processAudioStream(rawStream);
+
       const audioChunks: BlobPart[] = [];
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(processedStream);
       const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
       recognition.lang = 'pt-BR';
@@ -105,6 +113,11 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
       recognition.start();
       setIsRecording(true);
       setIsPaused(false);
+
+      toast({
+        title: "Gravação iniciada",
+        description: "O áudio está sendo pré-processado para melhor qualidade.",
+      });
     } catch (error) {
       toast({
         title: "Erro",
@@ -120,6 +133,10 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
       mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
       if (speechRecognitionRef.current) {
         speechRecognitionRef.current.stop();
+      }
+      if (audioPreprocessorRef.current) {
+        audioPreprocessorRef.current.dispose();
+        audioPreprocessorRef.current = null;
       }
       setIsRecording(false);
       setIsPaused(false);
