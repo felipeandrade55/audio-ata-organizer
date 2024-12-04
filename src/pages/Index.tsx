@@ -14,8 +14,17 @@ const Index = () => {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+        } 
+      });
+      
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm',
+      });
+      
       const audioChunks: BlobPart[] = [];
 
       recorder.ondataavailable = (event) => {
@@ -23,7 +32,7 @@ const Index = () => {
       };
 
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
         setIsTranscribing(true);
         
         try {
@@ -33,11 +42,15 @@ const Index = () => {
             { device: "cpu" }
           );
 
-          // Convert Blob to ArrayBuffer and then to Float32Array
+          // Convert audio to proper format
+          const audioContext = new AudioContext();
           const arrayBuffer = await audioBlob.arrayBuffer();
-          const audioData = new Float32Array(arrayBuffer);
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
           
-          const result = await transcriber(audioData);
+          // Convert to mono and get the samples
+          const samples = audioBuffer.getChannelData(0);
+          
+          const result = await transcriber(samples);
           const transcriptionText = Array.isArray(result) 
             ? result[0]?.text || "" 
             : (result as AutomaticSpeechRecognitionOutput).text;
@@ -49,6 +62,7 @@ const Index = () => {
             description: "O texto da reunião está pronto.",
           });
         } catch (error) {
+          console.error('Erro na transcrição:', error);
           toast({
             title: "Erro na transcrição",
             description: "Não foi possível transcrever o áudio.",
