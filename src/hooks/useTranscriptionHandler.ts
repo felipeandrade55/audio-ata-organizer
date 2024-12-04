@@ -48,7 +48,7 @@ export const useTranscriptionHandler = ({
       }
 
       const result = await response.json();
-      const segments = await processTranscriptionResult(result, recordingStartTime || 0, apiKey);
+      const segments = await processTranscriptionResult(result, audioBlob, apiKey);
       setTranscriptionSegments(segments);
 
       // Processa palavras-chave e atualiza a ata
@@ -82,7 +82,7 @@ export const useTranscriptionHandler = ({
     } finally {
       setIsTranscribing(false);
     }
-  }, [apiKey, setIsTranscribing, setTranscriptionSegments, toast, minutes, onMinutesUpdate, recordingStartTime]);
+  }, [apiKey, setIsTranscribing, setTranscriptionSegments, toast, minutes, onMinutesUpdate]);
 
   return { handleTranscription };
 };
