@@ -14,6 +14,7 @@ export const useRecording = (apiKey: string) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
   const { toast } = useToast();
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
 
   const startRecording = async (identificationEnabled: boolean) => {
     if (!apiKey) {
@@ -69,6 +70,17 @@ export const useRecording = (apiKey: string) => {
 
       recorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        
+        // Verifica se a gravação tem pelo menos 0.1 segundos
+        if (!recordingStartTime || Date.now() - recordingStartTime < 100) {
+          toast({
+            title: "Aviso",
+            description: "A gravação é muito curta. Por favor, grave por mais tempo.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         setIsTranscribing(true);
         
         try {
@@ -87,7 +99,8 @@ export const useRecording = (apiKey: string) => {
           });
 
           if (!response.ok) {
-            throw new Error('Falha na transcrição');
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || 'Falha na transcrição');
           }
 
           const result = await response.json();
@@ -102,7 +115,7 @@ export const useRecording = (apiKey: string) => {
           console.error('Erro na transcrição:', error);
           toast({
             title: "Erro na transcrição",
-            description: "Não foi possível transcrever o áudio.",
+            description: error instanceof Error ? error.message : "Não foi possível transcrever o áudio.",
             variant: "destructive",
           });
         } finally {
@@ -111,6 +124,7 @@ export const useRecording = (apiKey: string) => {
       };
 
       recorder.start(1000);
+      setRecordingStartTime(Date.now());
       setMediaRecorder(recorder);
       setIsRecording(true);
       setIsPaused(false);
@@ -134,6 +148,7 @@ export const useRecording = (apiKey: string) => {
       setIsPaused(false);
       setMediaRecorder(null);
       setSpeechRecognition(null);
+      setRecordingStartTime(null);
     }
   };
 
