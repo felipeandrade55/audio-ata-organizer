@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, Square, ArrowRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
+import RecordingControls from "@/components/recording/RecordingControls";
+import TranscriptionSummary from "@/components/recording/TranscriptionSummary";
 
 interface TranscriptionSegment {
   speaker: string;
@@ -15,6 +15,7 @@ interface TranscriptionSegment {
 const Index = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -43,7 +44,9 @@ const Index = () => {
       const audioChunks: BlobPart[] = [];
 
       recorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
       };
 
       recorder.onstop = async () => {
@@ -71,7 +74,6 @@ const Index = () => {
 
           const result = await response.json();
           
-          // Simular identificação de falantes já que a API atual do Whisper não suporta diarização
           const segments = result.segments.map((segment: any, index: number) => ({
             speaker: `Participante ${Math.floor(index % 3) + 1}`,
             text: segment.text,
@@ -96,9 +98,10 @@ const Index = () => {
         }
       };
 
-      recorder.start();
+      recorder.start(1000); // Coleta chunks a cada segundo para permitir pausa/retomada
       setMediaRecorder(recorder);
       setIsRecording(true);
+      setIsPaused(false);
     } catch (error) {
       toast({
         title: "Erro",
@@ -113,7 +116,30 @@ const Index = () => {
       mediaRecorder.stop();
       mediaRecorder.stream.getTracks().forEach((track) => track.stop());
       setIsRecording(false);
+      setIsPaused(false);
       setMediaRecorder(null);
+    }
+  };
+
+  const pauseRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.pause();
+      setIsPaused(true);
+      toast({
+        title: "Gravação pausada",
+        description: "A gravação foi pausada. Clique em retomar para continuar.",
+      });
+    }
+  };
+
+  const resumeRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === "paused") {
+      mediaRecorder.resume();
+      setIsPaused(false);
+      toast({
+        title: "Gravação retomada",
+        description: "A gravação foi retomada.",
+      });
     }
   };
 
@@ -155,7 +181,9 @@ const Index = () => {
     <div className="container mx-auto p-4 max-w-4xl">
       <Card>
         <CardHeader>
-          <CardTitle className="text-center">Ata de Reunião - {formatDate(new Date())}</CardTitle>
+          <CardTitle className="text-center">
+            Ata de Reunião - {formatDate(new Date())}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-4">
@@ -169,62 +197,22 @@ const Index = () => {
               />
             </div>
 
-            <Button
-              size="lg"
-              variant={isRecording ? "destructive" : "default"}
-              onClick={isRecording ? stopRecording : startRecording}
-              className="w-full max-w-xs"
-              disabled={isTranscribing}
-            >
-              {isRecording ? (
-                <>
-                  <Square className="mr-2 h-5 w-5" />
-                  Parar Gravação
-                </>
-              ) : (
-                <>
-                  <Mic className="mr-2 h-5 w-5" />
-                  Iniciar Gravação
-                </>
-              )}
-            </Button>
-
-            {isRecording && (
-              <div className="text-center text-red-500 animate-pulse">
-                Gravando...
-              </div>
-            )}
-
-            {isTranscribing && (
-              <div className="text-center text-blue-500">
-                Transcrevendo o áudio...
-              </div>
-            )}
+            <RecordingControls
+              isRecording={isRecording}
+              isPaused={isPaused}
+              isTranscribing={isTranscribing}
+              onStartRecording={startRecording}
+              onStopRecording={stopRecording}
+              onPauseRecording={pauseRecording}
+              onResumeRecording={resumeRecording}
+            />
 
             {transcriptionSegments.length > 0 && (
-              <Card className="w-full mt-4">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col gap-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Duração Total</p>
-                        <p className="text-lg font-semibold">{getTotalDuration()}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Participantes</p>
-                        <p className="text-lg font-semibold">{getParticipantCount()}</p>
-                      </div>
-                    </div>
-                    <Button 
-                      onClick={viewFullTranscription}
-                      className="w-full"
-                    >
-                      Ver Transcrição Completa
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <TranscriptionSummary
+                duration={getTotalDuration()}
+                participantCount={getParticipantCount()}
+                onViewFullTranscription={viewFullTranscription}
+              />
             )}
           </div>
         </CardContent>
