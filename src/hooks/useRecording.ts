@@ -3,6 +3,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { TranscriptionSegment } from "@/types/transcription";
 import { voiceIdentificationService } from "@/services/voiceIdentificationService";
 import { playIdentificationPrompt } from "@/services/audioService";
+import { processTranscriptionResult } from "@/services/transcriptionService";
+import { handleNameRecognition } from "@/services/nameRecognitionService";
 
 export const useRecording = (apiKey: string) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -12,23 +14,6 @@ export const useRecording = (apiKey: string) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
   const { toast } = useToast();
-
-  const extractNameFromText = (text: string): string | null => {
-    // Procura por padrões comuns de menção de nome
-    const patterns = [
-      /meu nome[^\w]*(é|eh)[^\w]*([A-ZÀ-Ú][a-zà-ú]+(?:\s[A-ZÀ-Ú][a-zà-ú]+)*)/i,
-      /me chamo[^\w]*([A-ZÀ-Ú][a-zà-ú]+(?:\s[A-ZÀ-Ú][a-zà-ú]+)*)/i,
-      /sou[^\w]*([A-ZÀ-Ú][a-zà-ú]+(?:\s[A-ZÀ-Ú][a-zà-ú]+)*)/i
-    ];
-
-    for (const pattern of patterns) {
-      const match = text.match(pattern);
-      if (match && match[match.length - 1]) {
-        return match[match.length - 1].trim();
-      }
-    }
-    return null;
-  };
 
   const startRecording = async (identificationEnabled: boolean) => {
     if (!apiKey) {
@@ -56,7 +41,6 @@ export const useRecording = (apiKey: string) => {
       const recorder = new MediaRecorder(stream);
       const audioChunks: BlobPart[] = [];
 
-      // Inicializa o reconhecimento de fala
       const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.lang = 'pt-BR';
       recognition.continuous = true;
@@ -65,10 +49,10 @@ export const useRecording = (apiKey: string) => {
       recognition.onresult = (event) => {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
-          const name = extractNameFromText(transcript);
+          const name = handleNameRecognition(transcript);
           
           if (name) {
-            voiceIdentificationService.addProfile(name, new Float32Array(0)); // Simplificado para exemplo
+            voiceIdentificationService.addProfile(name, new Float32Array(0));
             toast({
               title: "Nome identificado",
               description: `Identificamos o participante: ${name}`,
@@ -110,18 +94,7 @@ export const useRecording = (apiKey: string) => {
           }
 
           const result = await response.json();
-          
-          const segments = result.segments.map((segment: any) => {
-            const audioFeatures = new Float32Array(segment.tokens.length);
-            const speaker = voiceIdentificationService.identifyMostSimilarSpeaker(audioFeatures);
-
-            return {
-              speaker,
-              text: segment.text,
-              timestamp: new Date(segment.start * 1000).toISOString().substr(11, 8)
-            };
-          });
-
+          const segments = processTranscriptionResult(result);
           setTranscriptionSegments(segments);
           
           toast({
