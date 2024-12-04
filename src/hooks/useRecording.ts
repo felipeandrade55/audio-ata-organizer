@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { TranscriptionSegment } from "@/types/transcription";
 import { voiceIdentificationService } from "@/services/voiceIdentificationService";
@@ -16,7 +16,7 @@ export const useRecording = (apiKey: string) => {
   const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
   const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
 
-  const startRecording = async (identificationEnabled: boolean) => {
+  const startRecording = useCallback(async (identificationEnabled: boolean) => {
     if (!apiKey) {
       toast({
         title: "Erro",
@@ -126,6 +126,7 @@ export const useRecording = (apiKey: string) => {
       setRecordingStartTime(Date.now());
       setMediaRecorder(recorder);
       setSpeechRecognition(recognition);
+      recognition.start();
       setIsRecording(true);
       setIsPaused(false);
     } catch (error) {
@@ -135,9 +136,9 @@ export const useRecording = (apiKey: string) => {
         variant: "destructive",
       });
     }
-  };
+  }, [apiKey, toast]);
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
     if (mediaRecorder) {
       mediaRecorder.stop();
       mediaRecorder.stream.getTracks().forEach((track) => track.stop());
@@ -150,9 +151,9 @@ export const useRecording = (apiKey: string) => {
       setSpeechRecognition(null);
       setRecordingStartTime(null);
     }
-  };
+  }, [mediaRecorder, speechRecognition]);
 
-  const pauseRecording = () => {
+  const pauseRecording = useCallback(() => {
     if (mediaRecorder && mediaRecorder.state === "recording") {
       mediaRecorder.pause();
       if (speechRecognition) {
@@ -164,9 +165,9 @@ export const useRecording = (apiKey: string) => {
         description: "A gravação foi pausada. Clique em retomar para continuar.",
       });
     }
-  };
+  }, [mediaRecorder, speechRecognition, toast]);
 
-  const resumeRecording = () => {
+  const resumeRecording = useCallback(() => {
     if (mediaRecorder && mediaRecorder.state === "paused") {
       mediaRecorder.resume();
       if (speechRecognition) {
@@ -178,7 +179,7 @@ export const useRecording = (apiKey: string) => {
         description: "A gravação foi retomada.",
       });
     }
-  };
+  }, [mediaRecorder, speechRecognition, toast]);
 
   return {
     isRecording,
