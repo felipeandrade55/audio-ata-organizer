@@ -2,12 +2,16 @@ import { useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { processTranscriptionResult } from "@/services/transcriptionService";
 import { TranscriptionSegment } from "@/types/transcription";
+import { findKeywords, updateMinutesWithKeywords } from "@/services/keywordRecognitionService";
+import { MeetingMinutes } from "@/types/meeting";
 
 interface TranscriptionHandlerProps {
   apiKey: string;
   setIsTranscribing: (value: boolean) => void;
   setTranscriptionSegments: (segments: TranscriptionSegment[]) => void;
   recordingStartTime: number | null;
+  minutes?: MeetingMinutes;
+  onMinutesUpdate?: (minutes: MeetingMinutes) => void;
 }
 
 export const useTranscriptionHandler = ({
@@ -15,6 +19,8 @@ export const useTranscriptionHandler = ({
   setIsTranscribing,
   setTranscriptionSegments,
   recordingStartTime,
+  minutes,
+  onMinutesUpdate,
 }: TranscriptionHandlerProps) => {
   const { toast } = useToast();
 
@@ -45,6 +51,23 @@ export const useTranscriptionHandler = ({
       const segments = processTranscriptionResult(result);
       setTranscriptionSegments(segments);
 
+      // Processa palavras-chave e atualiza a ata
+      if (minutes && onMinutesUpdate) {
+        const lastSegment = segments[segments.length - 1];
+        if (lastSegment) {
+          const keywords = findKeywords(lastSegment.text);
+          if (keywords.length > 0) {
+            const updatedMinutes = updateMinutesWithKeywords(minutes, keywords);
+            onMinutesUpdate(updatedMinutes);
+            
+            toast({
+              title: "Ata atualizada automaticamente",
+              description: "Identificamos informações relevantes na fala.",
+            });
+          }
+        }
+      }
+
       toast({
         title: "Transcrição concluída",
         description: "A ata da reunião está pronta.",
@@ -59,7 +82,7 @@ export const useTranscriptionHandler = ({
     } finally {
       setIsTranscribing(false);
     }
-  }, [apiKey, setIsTranscribing, setTranscriptionSegments, toast]);
+  }, [apiKey, setIsTranscribing, setTranscriptionSegments, toast, minutes, onMinutesUpdate]);
 
   return { handleTranscription };
 };

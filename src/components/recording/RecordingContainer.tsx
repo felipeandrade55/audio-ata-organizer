@@ -6,11 +6,26 @@ import RecordingControls from "./RecordingControls";
 import TranscriptionSummary from "./TranscriptionSummary";
 import IdentificationSwitch from "./IdentificationSwitch";
 import { useRecording } from "@/hooks/useRecording";
+import { MeetingMinutes } from "@/types/meeting";
 
 const RecordingContainer = () => {
   const navigate = useNavigate();
   const [apiKey, setApiKey] = useState(localStorage.getItem('openai_api_key') || '');
   const [identificationEnabled, setIdentificationEnabled] = useState(false);
+  const [minutes, setMinutes] = useState<MeetingMinutes>({
+    date: new Date().toLocaleDateString('pt-BR'),
+    startTime: new Date().toLocaleTimeString('pt-BR'),
+    endTime: '',
+    location: 'Virtual - Gravação de Áudio',
+    meetingTitle: '',
+    organizer: '',
+    participants: [],
+    agendaItems: [],
+    actionItems: [],
+    summary: '',
+    nextSteps: [],
+    author: 'Sistema de Transcrição',
+  });
   
   const {
     isRecording,
@@ -21,7 +36,7 @@ const RecordingContainer = () => {
     stopRecording,
     pauseRecording,
     resumeRecording,
-  } = useRecording(apiKey);
+  } = useRecording(apiKey, minutes, setMinutes);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('pt-BR', {
@@ -46,7 +61,8 @@ const RecordingContainer = () => {
     navigate("/transcription", {
       state: {
         segments: transcriptionSegments,
-        date: formatDate(new Date())
+        date: formatDate(new Date()),
+        minutes,
       }
     });
   };
