@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Pause, Play } from "lucide-react";
 import { motion } from "framer-motion";
@@ -27,7 +27,72 @@ const RecordingControls = ({
   onResumeRecording,
 }: RecordingControlsProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  const [noiseCheckInterval, setNoiseCheckInterval] = useState<number | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isRecording && !isPaused) {
+      setupNoiseDetection();
+    } else {
+      cleanupNoiseDetection();
+    }
+
+    return () => cleanupNoiseDetection();
+  }, [isRecording, isPaused]);
+
+  const setupNoiseDetection = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const context = new AudioContext();
+      const source = context.createMediaStreamSource(stream);
+      const analyserNode = context.createAnalyser();
+      
+      analyserNode.fftSize = 2048;
+      source.connect(analyserNode);
+      
+      setAudioContext(context);
+      setAnalyser(analyserNode);
+
+      const intervalId = window.setInterval(() => {
+        checkNoiseLevel(analyserNode);
+      }, 2000);
+
+      setNoiseCheckInterval(intervalId);
+    } catch (error) {
+      console.error("Erro ao configurar detecção de ruído:", error);
+    }
+  };
+
+  const checkNoiseLevel = (analyserNode: AnalyserNode) => {
+    const dataArray = new Float32Array(analyserNode.frequencyBinCount);
+    analyserNode.getFloatFrequencyData(dataArray);
+
+    // Calcula o nível médio de ruído
+    const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+    
+    // O valor -50 é um limiar ajustável para determinar ruído excessivo
+    if (average > -50) {
+      toast({
+        title: "Aviso de Ruído",
+        description: "Foi detectado muito ruído de fundo. Isso pode afetar a qualidade da transcrição.",
+        duration: 3000,
+      });
+    }
+  };
+
+  const cleanupNoiseDetection = () => {
+    if (noiseCheckInterval) {
+      clearInterval(noiseCheckInterval);
+      setNoiseCheckInterval(null);
+    }
+    if (audioContext) {
+      audioContext.close();
+      setAudioContext(null);
+    }
+    setAnalyser(null);
+  };
 
   return (
     <motion.div 
