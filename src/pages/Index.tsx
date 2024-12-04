@@ -3,15 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Square } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
 
 const Index = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [transcription, setTranscription] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('openai_api_key') || '');
   const { toast } = useToast();
 
   const startRecording = async () => {
+    if (!apiKey) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira sua chave da API OpenAI primeiro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -50,7 +61,7 @@ const Index = () => {
           const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+              'Authorization': `Bearer ${apiKey}`,
             },
             body: formData,
           });
@@ -99,6 +110,12 @@ const Index = () => {
     }
   };
 
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newApiKey = e.target.value;
+    setApiKey(newApiKey);
+    localStorage.setItem('openai_api_key', newApiKey);
+  };
+
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <Card>
@@ -107,6 +124,16 @@ const Index = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-4">
+            <div className="w-full">
+              <Input
+                type="password"
+                placeholder="Insira sua chave da API OpenAI"
+                value={apiKey}
+                onChange={handleApiKeyChange}
+                className="mb-4"
+              />
+            </div>
+
             <Button
               size="lg"
               variant={isRecording ? "destructive" : "default"}
