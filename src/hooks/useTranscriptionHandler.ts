@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { processTranscriptionResult } from "@/services/transcriptionService";
 import { TranscriptionSegment } from "@/types/transcription";
-import { findKeywords, updateMinutesWithKeywords } from "@/services/keywordRecognitionService";
+import { findTriggers, updateMinutesWithTriggers } from "@/services/triggerService";
 import { MeetingMinutes } from "@/types/meeting";
 
 interface TranscriptionHandlerProps {
@@ -49,24 +49,28 @@ export const useTranscriptionHandler = ({
 
       const result = await response.json();
       const segments = await processTranscriptionResult(result, audioBlob, apiKey);
-      setTranscriptionSegments(segments);
-
-      // Processa palavras-chave e atualiza a ata
-      if (minutes && onMinutesUpdate && segments.length > 0) {
+      
+      // Processa triggers no último segmento
+      if (segments.length > 0) {
         const lastSegment = segments[segments.length - 1];
-        if (lastSegment) {
-          const keywords = findKeywords(lastSegment.text);
-          if (keywords.length > 0) {
-            const updatedMinutes = updateMinutesWithKeywords(minutes, keywords);
+        const triggers = findTriggers(lastSegment.text);
+        
+        if (triggers.length > 0) {
+          lastSegment.triggers = triggers;
+          
+          if (minutes && onMinutesUpdate) {
+            const updatedMinutes = updateMinutesWithTriggers(minutes, triggers);
             onMinutesUpdate(updatedMinutes);
             
             toast({
-              title: "Ata atualizada automaticamente",
-              description: "Identificamos informações relevantes na fala.",
+              title: "Ação detectada",
+              description: "A ata foi atualizada com base nas palavras-chave identificadas.",
             });
           }
         }
       }
+      
+      setTranscriptionSegments(segments);
 
       toast({
         title: "Transcrição concluída",

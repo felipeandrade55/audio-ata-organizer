@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit2, Save, Smile } from "lucide-react";
+import { Edit2, Save, Smile, AlertTriangle, Lightbulb } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,6 +22,10 @@ interface Segment {
     type: string;
     confidence: number;
   };
+  triggers?: {
+    type: 'task' | 'reminder' | 'decision' | 'risk' | 'highlight';
+    text: string;
+  }[];
 }
 
 interface TranscriptionTableProps {
@@ -30,42 +34,52 @@ interface TranscriptionTableProps {
 }
 
 const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTableProps) => {
-  const [editingSpeaker, setEditingSpeaker] = useState<number | null>(null);
-  const [newSpeakerName, setNewSpeakerName] = useState("");
-  const { toast } = useToast();
+  const getTriggerColor = (type: string) => {
+    switch (type) {
+      case 'task':
+        return 'bg-blue-100 dark:bg-blue-900/30';
+      case 'reminder':
+        return 'bg-yellow-100 dark:bg-yellow-900/30 underline';
+      case 'decision':
+        return 'bg-green-100 dark:bg-green-900/30';
+      case 'risk':
+        return 'bg-red-100 dark:bg-red-900/30';
+      case 'highlight':
+        return 'bg-purple-100 dark:bg-purple-900/30';
+      default:
+        return '';
+    }
+  };
+
+  const getTriggerIcon = (type: string) => {
+    switch (type) {
+      case 'task':
+        return <Edit2 className="h-4 w-4 text-blue-500" />;
+      case 'reminder':
+        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      case 'decision':
+        return <Save className="h-4 w-4 text-green-500" />;
+      case 'risk':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'highlight':
+        return <Lightbulb className="h-4 w-4 text-purple-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getTriggerTooltip = (trigger: Segment['triggers'][0]) => {
+    const typeLabels = {
+      task: 'Nova Tarefa',
+      reminder: 'Lembrete',
+      decision: 'Decisão',
+      risk: 'Risco Identificado',
+      highlight: 'Destaque',
+    };
+    return `${typeLabels[trigger.type]}: ${trigger.text}`;
+  };
+
   const isMobile = useIsMobile();
-
-  const handleEditSpeaker = (index: number, currentName: string) => {
-    setEditingSpeaker(index);
-    setNewSpeakerName(currentName);
-  };
-
-  const handleSaveSpeaker = (index: number) => {
-    const updatedSegments = segments.map((segment, i) => {
-      if (i === index) {
-        return { ...segment, speaker: newSpeakerName };
-      }
-      return segment;
-    });
-    onUpdateSegments(updatedSegments);
-    setEditingSpeaker(null);
-    setNewSpeakerName("");
-    
-    toast({
-      title: "Nome atualizado",
-      description: "O nome do participante foi atualizado com sucesso.",
-    });
-  };
-
-  const getEmotionColor = (emotion?: { type: string; confidence: number }) => {
-    if (!emotion) return "";
-    return "bg-red-100 dark:bg-red-900/30";
-  };
-
-  const getEmotionTooltip = (emotion?: { type: string; confidence: number }) => {
-    if (!emotion) return "";
-    return `Emoção detectada: ${emotion.type} (Confiança: ${Math.round(emotion.confidence * 100)}%)`;
-  };
 
   if (isMobile) {
     return (
@@ -73,52 +87,44 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
         {segments.map((segment, index) => (
           <div 
             key={index} 
-            className={`rounded-lg p-4 space-y-2 border ${getEmotionColor(segment.emotion)}`}
+            className={`rounded-lg p-4 space-y-2 border ${segment.emotion ? getEmotionColor(segment.emotion) : ''}`}
           >
             <div className="flex justify-between items-start">
               <span className="text-sm text-muted-foreground">{segment.timestamp}</span>
-              {editingSpeaker === index ? (
-                <div className="flex items-center gap-2 flex-1 ml-2">
-                  <Input
-                    value={newSpeakerName}
-                    onChange={(e) => setNewSpeakerName(e.target.value)}
-                    className="w-full"
-                  />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleSaveSpeaker(index)}
-                  >
-                    <Save className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{segment.speaker}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleEditSpeaker(index, segment.speaker)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <span className="font-medium">{segment.speaker}</span>
+              </div>
             </div>
             <div className="flex items-start gap-2">
-              <p className="text-sm flex-grow">{segment.text}</p>
-              {segment.emotion && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {getEmotionTooltip(segment.emotion)}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+              <p className={`text-sm flex-grow ${segment.triggers?.length ? getTriggerColor(segment.triggers[0].type) : ''}`}>
+                {segment.text}
+              </p>
+              <div className="flex gap-1">
+                {segment.emotion && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {getEmotionTooltip(segment.emotion)}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {segment.triggers?.map((trigger, i) => (
+                  <TooltipProvider key={i}>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        {getTriggerIcon(trigger.type)}
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {getTriggerTooltip(trigger)}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
+              </div>
             </div>
           </div>
         ))}
@@ -141,56 +147,47 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
           {segments.map((segment, index) => (
             <TableRow 
               key={index}
-              className={getEmotionColor(segment.emotion)}
+              className={segment.emotion ? getEmotionColor(segment.emotion) : ''}
             >
               <TableCell className="whitespace-nowrap">{segment.timestamp}</TableCell>
               <TableCell>
-                {editingSpeaker === index ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={newSpeakerName}
-                      onChange={(e) => setNewSpeakerName(e.target.value)}
-                      className="w-full min-w-[100px]"
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleSaveSpeaker(index)}
-                    >
-                      <Save className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <span className="whitespace-nowrap">{segment.speaker}</span>
-                )}
+                <span className="whitespace-nowrap">{segment.speaker}</span>
               </TableCell>
               <TableCell className="max-w-[300px] sm:max-w-none">
                 <div className="break-words flex items-start gap-2">
-                  <span>{segment.text}</span>
-                  {segment.emotion && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {getEmotionTooltip(segment.emotion)}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
+                  <span className={segment.triggers?.length ? getTriggerColor(segment.triggers[0].type) : ''}>
+                    {segment.text}
+                  </span>
+                  <div className="flex gap-1">
+                    {segment.emotion && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {getEmotionTooltip(segment.emotion)}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {segment.triggers?.map((trigger, i) => (
+                      <TooltipProvider key={i}>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            {getTriggerIcon(trigger.type)}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {getTriggerTooltip(trigger)}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ))}
+                  </div>
                 </div>
               </TableCell>
               <TableCell>
-                {editingSpeaker !== index && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleEditSpeaker(index, segment.speaker)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                )}
+                {/* ... Ações dos segmentos se necessário */}
               </TableCell>
             </TableRow>
           ))}
