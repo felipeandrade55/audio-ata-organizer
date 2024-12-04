@@ -33,8 +33,15 @@ const Index = () => {
             { device: "cpu" }
           );
 
-          const result = await transcriber([audioBlob]) as AutomaticSpeechRecognitionOutput[];
-          const transcriptionText = Array.isArray(result) ? result[0].text : result.text;
+          // Convert Blob to ArrayBuffer and then to Float32Array
+          const arrayBuffer = await audioBlob.arrayBuffer();
+          const audioData = new Float32Array(arrayBuffer);
+          
+          const result = await transcriber(audioData);
+          const transcriptionText = Array.isArray(result) 
+            ? result[0]?.text || "" 
+            : (result as AutomaticSpeechRecognitionOutput).text;
+            
           setTranscription(transcriptionText);
           
           toast({
