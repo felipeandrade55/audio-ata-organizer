@@ -10,6 +10,7 @@ export const useRecording = (apiKey: string) => {
   const { toast } = useToast();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const recordingState = useRecordingState();
 
   const {
     isRecording,
@@ -22,7 +23,7 @@ export const useRecording = (apiKey: string) => {
     setTranscriptionSegments,
     recordingStartTime,
     setRecordingStartTime,
-  } = useRecordingState();
+  } = recordingState;
 
   const { handleTranscription } = useTranscriptionHandler({
     apiKey,
