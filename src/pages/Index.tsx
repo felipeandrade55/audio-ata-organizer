@@ -5,6 +5,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import RecordingControls from "@/components/recording/RecordingControls";
 import TranscriptionSummary from "@/components/recording/TranscriptionSummary";
+import IdentificationSwitch from "@/components/recording/IdentificationSwitch";
+import { playIdentificationPrompt } from "@/services/audioService";
 
 interface TranscriptionSegment {
   speaker: string;
@@ -20,6 +22,7 @@ const Index = () => {
   const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem('openai_api_key') || '');
+  const [identificationEnabled, setIdentificationEnabled] = useState(false);
   const { toast } = useToast();
 
   const startRecording = async () => {
@@ -33,6 +36,10 @@ const Index = () => {
     }
 
     try {
+      if (identificationEnabled) {
+        await playIdentificationPrompt();
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           sampleRate: 16000,
@@ -98,7 +105,7 @@ const Index = () => {
         }
       };
 
-      recorder.start(1000); // Coleta chunks a cada segundo para permitir pausa/retomada
+      recorder.start(1000);
       setMediaRecorder(recorder);
       setIsRecording(true);
       setIsPaused(false);
@@ -194,6 +201,10 @@ const Index = () => {
                 value={apiKey}
                 onChange={handleApiKeyChange}
                 className="mb-4"
+              />
+              <IdentificationSwitch
+                enabled={identificationEnabled}
+                onToggle={setIdentificationEnabled}
               />
             </div>
 
