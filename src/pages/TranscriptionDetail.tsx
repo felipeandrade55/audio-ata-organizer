@@ -32,6 +32,46 @@ const TranscriptionDetail = () => {
       navigate("/");
       return;
     }
+
+    // Automatically analyze transcription when component mounts
+    const autoAnalyzeTranscription = async () => {
+      const apiKey = localStorage.getItem('openai_api_key');
+      if (!apiKey) {
+        toast({
+          title: "Chave da API necessária",
+          description: "Por favor, configure sua chave da API OpenAI nas configurações.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsAnalyzing(true);
+      try {
+        const transcriptionText = segments
+          .map((s) => `${s.speaker}: ${s.text}`)
+          .join("\n");
+
+        const analyzedMinutes = await analyzeTranscription(transcriptionText, apiKey);
+        
+        if (analyzedMinutes) {
+          setCurrentMinutes(analyzedMinutes);
+          toast({
+            title: "Análise concluída",
+            description: "A ata foi preenchida automaticamente com base na transcrição.",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Erro na análise",
+          description: "Não foi possível analisar a transcrição.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsAnalyzing(false);
+      }
+    };
+
+    autoAnalyzeTranscription();
   }, [location.state, navigate, toast]);
 
   if (!location.state) {
@@ -122,43 +162,6 @@ const TranscriptionDetail = () => {
     XLSX.writeFile(wb, `ata-reuniao-${date}.xlsx`);
   };
 
-  const analyzeWithAI = async () => {
-    const apiKey = localStorage.getItem('openai_api_key');
-    if (!apiKey) {
-      toast({
-        title: "Chave da API necessária",
-        description: "Por favor, configure sua chave da API OpenAI nas configurações.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsAnalyzing(true);
-    try {
-      const transcriptionText = segments
-        .map((s) => `${s.speaker}: ${s.text}`)
-        .join("\n");
-
-      const analyzedMinutes = await analyzeTranscription(transcriptionText, apiKey);
-      
-      if (analyzedMinutes) {
-        setCurrentMinutes(analyzedMinutes);
-        toast({
-          title: "Análise concluída",
-          description: "A ata foi preenchida automaticamente com base na transcrição.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro na análise",
-        description: "Não foi possível analisar a transcrição.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <div className={`container mx-auto px-2 py-4 sm:px-4 sm:py-6 ${isMobile ? 'max-w-full' : 'max-w-5xl'}`}>
@@ -173,14 +176,6 @@ const TranscriptionDetail = () => {
             />
             <div className="mt-4 sm:mt-6">
               <div className="flex justify-end gap-2 mb-4">
-                <Button
-                  variant="outline"
-                  onClick={analyzeWithAI}
-                  disabled={isAnalyzing}
-                >
-                  <Wand2 className="h-4 w-4 mr-2" />
-                  {isAnalyzing ? "Analisando..." : "Analisar com IA"}
-                </Button>
                 <Button
                   variant="outline"
                   onClick={() => setIsEditing(!isEditing)}
