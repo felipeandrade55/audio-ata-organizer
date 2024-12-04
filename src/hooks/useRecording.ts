@@ -7,13 +7,13 @@ import { processTranscriptionResult } from "@/services/transcriptionService";
 import { handleNameRecognition } from "@/services/nameRecognitionService";
 
 export const useRecording = (apiKey: string) => {
+  const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
-  const { toast } = useToast();
   const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
 
   const startRecording = async (identificationEnabled: boolean) => {
@@ -41,8 +41,8 @@ export const useRecording = (apiKey: string) => {
       
       const recorder = new MediaRecorder(stream);
       const audioChunks: BlobPart[] = [];
-
       const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      
       recognition.lang = 'pt-BR';
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -71,7 +71,6 @@ export const useRecording = (apiKey: string) => {
       recorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
         
-        // Verifica se a gravação tem pelo menos 0.1 segundos
         if (!recordingStartTime || Date.now() - recordingStartTime < 100) {
           toast({
             title: "Aviso",
@@ -126,6 +125,7 @@ export const useRecording = (apiKey: string) => {
       recorder.start(1000);
       setRecordingStartTime(Date.now());
       setMediaRecorder(recorder);
+      setSpeechRecognition(recognition);
       setIsRecording(true);
       setIsPaused(false);
     } catch (error) {
