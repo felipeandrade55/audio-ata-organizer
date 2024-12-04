@@ -93,24 +93,26 @@ const TranscriptionDetail = () => {
   };
 
   return (
-    <div className={`container mx-auto p-2 sm:p-4 ${isMobile ? 'max-w-full' : 'max-w-4xl'}`}>
-      <Card className="overflow-hidden">
-        <CardContent className="p-2 sm:p-6">
-          <TranscriptionHeader
-            date={date}
-            onExportTxt={exportToTxt}
-            onExportPdf={exportToPdf}
-            onExportExcel={exportToExcel}
-            onBack={() => navigate(-1)}
-          />
-          <div className="mt-4 sm:mt-6 overflow-x-auto">
-            <TranscriptionTable
-              segments={segments}
-              onUpdateSegments={setSegments}
+    <div className="min-h-screen bg-background">
+      <div className={`container mx-auto px-2 py-4 sm:px-4 sm:py-6 ${isMobile ? 'max-w-full' : 'max-w-5xl'}`}>
+        <Card className="overflow-hidden">
+          <CardContent className="p-2 sm:p-6">
+            <TranscriptionHeader
+              date={date}
+              onExportTxt={exportToTxt}
+              onExportPdf={exportToPdf}
+              onExportExcel={exportToExcel}
+              onBack={() => navigate(-1)}
             />
-          </div>
-        </CardContent>
-      </Card>
+            <div className="mt-4 sm:mt-6">
+              <TranscriptionTable
+                segments={segments}
+                onUpdateSegments={setSegments}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -52,6 +52,48 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
     });
   };
 
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {segments.map((segment, index) => (
+          <div key={index} className="bg-card rounded-lg p-4 space-y-2 border">
+            <div className="flex justify-between items-start">
+              <span className="text-sm text-muted-foreground">{segment.timestamp}</span>
+              {editingSpeaker === index ? (
+                <div className="flex items-center gap-2 flex-1 ml-2">
+                  <Input
+                    value={newSpeakerName}
+                    onChange={(e) => setNewSpeakerName(e.target.value)}
+                    className="w-full"
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleSaveSpeaker(index)}
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{segment.speaker}</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleEditSpeaker(index, segment.speaker)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+            <p className="text-sm">{segment.text}</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto -mx-2 sm:mx-0">
       <Table>

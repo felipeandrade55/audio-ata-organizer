@@ -43,12 +43,17 @@ const TranscriptionHeader = ({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-        <Button variant="ghost" onClick={onBack} className="px-0 sm:px-4">
+    <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          className="w-fit px-0 sm:px-4 -ml-2 sm:ml-0"
+        >
           <ChevronLeft className="h-4 w-4" />
           <span className="ml-2">Voltar</span>
         </Button>
+        
         {isEditing ? (
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Input
@@ -83,7 +88,7 @@ const TranscriptionHeader = ({
             Exportar
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-[200px]">
           <DropdownMenuItem onClick={onExportTxt}>
             Exportar como TXT
           </DropdownMenuItem>
