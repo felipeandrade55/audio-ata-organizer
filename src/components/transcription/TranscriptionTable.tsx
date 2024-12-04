@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit2, Save } from "lucide-react";
+import { Edit2, Save, Smile } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,11 +12,16 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface Segment {
   speaker: string;
   text: string;
   timestamp: string;
+  emotion?: {
+    type: string;
+    confidence: number;
+  };
 }
 
 interface TranscriptionTableProps {
@@ -52,11 +57,24 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
     });
   };
 
+  const getEmotionColor = (emotion?: { type: string; confidence: number }) => {
+    if (!emotion) return "";
+    return "bg-red-100 dark:bg-red-900/30";
+  };
+
+  const getEmotionTooltip = (emotion?: { type: string; confidence: number }) => {
+    if (!emotion) return "";
+    return `Emoção detectada: ${emotion.type} (Confiança: ${Math.round(emotion.confidence * 100)}%)`;
+  };
+
   if (isMobile) {
     return (
       <div className="space-y-4">
         {segments.map((segment, index) => (
-          <div key={index} className="bg-card rounded-lg p-4 space-y-2 border">
+          <div 
+            key={index} 
+            className={`rounded-lg p-4 space-y-2 border ${getEmotionColor(segment.emotion)}`}
+          >
             <div className="flex justify-between items-start">
               <span className="text-sm text-muted-foreground">{segment.timestamp}</span>
               {editingSpeaker === index ? (
@@ -87,7 +105,14 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
                 </div>
               )}
             </div>
-            <p className="text-sm">{segment.text}</p>
+            <div className="flex items-start gap-2">
+              <p className="text-sm flex-grow">{segment.text}</p>
+              {segment.emotion && (
+                <Tooltip content={getEmotionTooltip(segment.emotion)}>
+                  <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
+                </Tooltip>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -107,7 +132,10 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
         </TableHeader>
         <TableBody>
           {segments.map((segment, index) => (
-            <TableRow key={index}>
+            <TableRow 
+              key={index}
+              className={getEmotionColor(segment.emotion)}
+            >
               <TableCell className="whitespace-nowrap">{segment.timestamp}</TableCell>
               <TableCell>
                 {editingSpeaker === index ? (
@@ -130,7 +158,14 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
                 )}
               </TableCell>
               <TableCell className="max-w-[300px] sm:max-w-none">
-                <div className="break-words">{segment.text}</div>
+                <div className="break-words flex items-start gap-2">
+                  <span>{segment.text}</span>
+                  {segment.emotion && (
+                    <Tooltip content={getEmotionTooltip(segment.emotion)}>
+                      <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
+                    </Tooltip>
+                  )}
+                </div>
               </TableCell>
               <TableCell>
                 {editingSpeaker !== index && (
