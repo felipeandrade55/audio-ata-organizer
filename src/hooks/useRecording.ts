@@ -51,18 +51,15 @@ export const useRecording = (apiKey: string) => {
           const transcript = event.results[i][0].transcript;
           const name = handleNameRecognition(transcript);
           
-          if (name) {
+          if (name && !voiceIdentificationService.profiles.find(p => p.name === name)) {
             voiceIdentificationService.addProfile(name, new Float32Array(0));
             toast({
-              title: "Nome identificado",
+              title: "Novo participante identificado",
               description: `Identificamos o participante: ${name}`,
             });
           }
         }
       };
-
-      recognition.start();
-      setSpeechRecognition(recognition);
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
