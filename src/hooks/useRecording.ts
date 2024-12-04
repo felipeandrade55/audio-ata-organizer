@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { TranscriptionSegment } from "@/types/transcription";
 import { voiceIdentificationService } from "@/services/voiceIdentificationService";
@@ -10,11 +10,12 @@ export const useRecording = (apiKey: string) => {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
+  const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([]);
   const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
 
   const startRecording = useCallback(async (identificationEnabled: boolean) => {
     if (!apiKey) {
@@ -124,8 +125,8 @@ export const useRecording = (apiKey: string) => {
 
       recorder.start(1000);
       setRecordingStartTime(Date.now());
-      setMediaRecorder(recorder);
-      setSpeechRecognition(recognition);
+      mediaRecorderRef.current = recorder;
+      speechRecognitionRef.current = recognition;
       recognition.start();
       setIsRecording(true);
       setIsPaused(false);
@@ -136,28 +137,28 @@ export const useRecording = (apiKey: string) => {
         variant: "destructive",
       });
     }
-  }, [apiKey, toast]);
+  }, [apiKey, toast, recordingStartTime]);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-      mediaRecorder.stream.getTracks().forEach((track) => track.stop());
-      if (speechRecognition) {
-        speechRecognition.stop();
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.stop();
       }
       setIsRecording(false);
       setIsPaused(false);
-      setMediaRecorder(null);
-      setSpeechRecognition(null);
+      mediaRecorderRef.current = null;
+      speechRecognitionRef.current = null;
       setRecordingStartTime(null);
     }
-  }, [mediaRecorder, speechRecognition]);
+  }, []);
 
   const pauseRecording = useCallback(() => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.pause();
-      if (speechRecognition) {
-        speechRecognition.stop();
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.pause();
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.stop();
       }
       setIsPaused(true);
       toast({
@@ -165,13 +166,13 @@ export const useRecording = (apiKey: string) => {
         description: "A gravação foi pausada. Clique em retomar para continuar.",
       });
     }
-  }, [mediaRecorder, speechRecognition, toast]);
+  }, [toast]);
 
   const resumeRecording = useCallback(() => {
-    if (mediaRecorder && mediaRecorder.state === "paused") {
-      mediaRecorder.resume();
-      if (speechRecognition) {
-        speechRecognition.start();
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "paused") {
+      mediaRecorderRef.current.resume();
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.start();
       }
       setIsPaused(false);
       toast({
@@ -179,7 +180,7 @@ export const useRecording = (apiKey: string) => {
         description: "A gravação foi retomada.",
       });
     }
-  }, [mediaRecorder, speechRecognition, toast]);
+  }, [toast]);
 
   return {
     isRecording,
