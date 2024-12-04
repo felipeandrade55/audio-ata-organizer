@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Segment {
   speaker: string;
@@ -108,9 +108,16 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
             <div className="flex items-start gap-2">
               <p className="text-sm flex-grow">{segment.text}</p>
               {segment.emotion && (
-                <Tooltip content={getEmotionTooltip(segment.emotion)}>
-                  <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {getEmotionTooltip(segment.emotion)}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
           </div>
@@ -161,9 +168,16 @@ const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTablePr
                 <div className="break-words flex items-start gap-2">
                   <span>{segment.text}</span>
                   {segment.emotion && (
-                    <Tooltip content={getEmotionTooltip(segment.emotion)}>
-                      <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Smile className="h-4 w-4 text-red-500 flex-shrink-0" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {getEmotionTooltip(segment.emotion)}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                 </div>
               </TableCell>

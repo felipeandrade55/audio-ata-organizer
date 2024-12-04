@@ -48,11 +48,11 @@ export const useTranscriptionHandler = ({
       }
 
       const result = await response.json();
-      const segments = processTranscriptionResult(result);
+      const segments = await processTranscriptionResult(result, recordingStartTime || 0, apiKey);
       setTranscriptionSegments(segments);
 
       // Processa palavras-chave e atualiza a ata
-      if (minutes && onMinutesUpdate) {
+      if (minutes && onMinutesUpdate && segments.length > 0) {
         const lastSegment = segments[segments.length - 1];
         if (lastSegment) {
           const keywords = findKeywords(lastSegment.text);
@@ -82,7 +82,7 @@ export const useTranscriptionHandler = ({
     } finally {
       setIsTranscribing(false);
     }
-  }, [apiKey, setIsTranscribing, setTranscriptionSegments, toast, minutes, onMinutesUpdate]);
+  }, [apiKey, setIsTranscribing, setTranscriptionSegments, toast, minutes, onMinutesUpdate, recordingStartTime]);
 
   return { handleTranscription };
 };
