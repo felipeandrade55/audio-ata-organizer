@@ -6,7 +6,7 @@ import { handleNameRecognition } from "@/services/nameRecognitionService";
 import { useRecordingState } from "./useRecordingState";
 import { useTranscriptionHandler } from "./useTranscriptionHandler";
 import { MeetingMinutes } from "@/types/meeting";
-import { createAudioPreprocessor } from "@/services/audioPreprocessingService";
+import { createAudioPreprocessor } from "@/services/audio";
 
 interface UseRecordingProps {
   apiKey: string;
