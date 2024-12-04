@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Square } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { pipeline } from "@huggingface/transformers";
 
 const Index = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [transcription, setTranscription] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const { toast } = useToast();
 
   const startRecording = async () => {
@@ -20,14 +22,35 @@ const Index = () => {
         audioChunks.push(event.data);
       };
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-        // Por enquanto apenas mostramos que a gravação foi finalizada
-        // Posteriormente implementaremos a transcrição
-        toast({
-          title: "Gravação finalizada",
-          description: "Em breve implementaremos a transcrição do áudio.",
-        });
+        setIsTranscribing(true);
+        
+        try {
+          // Criar o pipeline de reconhecimento de fala
+          const transcriber = await pipeline(
+            "automatic-speech-recognition",
+            "openai/whisper-small",
+            { device: "cpu" }
+          );
+
+          // Transcrever o áudio
+          const result = await transcriber(audioBlob);
+          setTranscription(result.text);
+          
+          toast({
+            title: "Transcrição concluída",
+            description: "O texto da reunião está pronto.",
+          });
+        } catch (error) {
+          toast({
+            title: "Erro na transcrição",
+            description: "Não foi possível transcrever o áudio.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsTranscribing(false);
+        }
       };
 
       recorder.start();
@@ -64,6 +87,7 @@ const Index = () => {
               variant={isRecording ? "destructive" : "default"}
               onClick={isRecording ? stopRecording : startRecording}
               className="w-full max-w-xs"
+              disabled={isTranscribing}
             >
               {isRecording ? (
                 <>
@@ -81,6 +105,12 @@ const Index = () => {
             {isRecording && (
               <div className="text-center text-red-500 animate-pulse">
                 Gravando...
+              </div>
+            )}
+
+            {isTranscribing && (
+              <div className="text-center text-blue-500">
+                Transcrevendo o áudio...
               </div>
             )}
 
