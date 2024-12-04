@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Square } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { pipeline } from "@huggingface/transformers";
+import { pipeline, AutomaticSpeechRecognitionOutput } from "@huggingface/transformers";
 
 const Index = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -27,16 +27,15 @@ const Index = () => {
         setIsTranscribing(true);
         
         try {
-          // Criar o pipeline de reconhecimento de fala
           const transcriber = await pipeline(
             "automatic-speech-recognition",
             "openai/whisper-small",
             { device: "cpu" }
           );
 
-          // Transcrever o áudio
-          const result = await transcriber(audioBlob);
-          setTranscription(result.text);
+          const result = await transcriber([audioBlob]) as AutomaticSpeechRecognitionOutput[];
+          const transcriptionText = Array.isArray(result) ? result[0].text : result.text;
+          setTranscription(transcriptionText);
           
           toast({
             title: "Transcrição concluída",
