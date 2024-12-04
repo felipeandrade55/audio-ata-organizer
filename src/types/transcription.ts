@@ -1,4 +1,4 @@
-export interface TranscriptionSegment {
+export interface Segment {
   speaker: string;
   text: string;
   timestamp: string;
