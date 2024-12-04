@@ -7,6 +7,8 @@ import MeetingMinutesDisplay from "@/components/meeting/MeetingMinutesDisplay";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MeetingMinutes } from "@/types/meeting";
+import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 
 const TranscriptionDetail = () => {
   const location = useLocation();
@@ -42,7 +44,7 @@ const TranscriptionDetail = () => {
     meetingTitle: "Reunião Transcrita",
     organizer: "Sistema de Transcrição",
     participants: Array.from(new Set(segments.map(s => s.speaker))).map(name => ({
-      name,
+      name: String(name), // Explicitly convert to string to fix type error
     })),
     agendaItems: [{
       title: "Transcrição Automática",
