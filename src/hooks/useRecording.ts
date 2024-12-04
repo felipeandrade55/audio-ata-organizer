@@ -10,7 +10,25 @@ export const useRecording = (apiKey: string) => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
   const { toast } = useToast();
+
+  const extractNameFromText = (text: string): string | null => {
+    // Procura por padrões comuns de menção de nome
+    const patterns = [
+      /meu nome[^\w]*(é|eh)[^\w]*([A-ZÀ-Ú][a-zà-ú]+(?:\s[A-ZÀ-Ú][a-zà-ú]+)*)/i,
+      /me chamo[^\w]*([A-ZÀ-Ú][a-zà-ú]+(?:\s[A-ZÀ-Ú][a-zà-ú]+)*)/i,
+      /sou[^\w]*([A-ZÀ-Ú][a-zà-ú]+(?:\s[A-ZÀ-Ú][a-zà-ú]+)*)/i
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[match.length - 1]) {
+        return match[match.length - 1].trim();
+      }
+    }
+    return null;
+  };
 
   const startRecording = async (identificationEnabled: boolean) => {
     if (!apiKey) {
@@ -37,6 +55,30 @@ export const useRecording = (apiKey: string) => {
       
       const recorder = new MediaRecorder(stream);
       const audioChunks: BlobPart[] = [];
+
+      // Inicializa o reconhecimento de fala
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'pt-BR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          const name = extractNameFromText(transcript);
+          
+          if (name) {
+            voiceIdentificationService.addProfile(name, new Float32Array(0)); // Simplificado para exemplo
+            toast({
+              title: "Nome identificado",
+              description: `Identificamos o participante: ${name}`,
+            });
+          }
+        }
+      };
+
+      recognition.start();
+      setSpeechRecognition(recognition);
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -71,9 +113,7 @@ export const useRecording = (apiKey: string) => {
           
           const segments = result.segments.map((segment: any) => {
             const audioFeatures = new Float32Array(segment.tokens.length);
-            const speaker = identificationEnabled 
-              ? voiceIdentificationService.identifyMostSimilarSpeaker(audioFeatures)
-              : `Participante ${Math.floor(Math.random() * 3) + 1}`;
+            const speaker = voiceIdentificationService.identifyMostSimilarSpeaker(audioFeatures);
 
             return {
               speaker,
@@ -117,15 +157,22 @@ export const useRecording = (apiKey: string) => {
     if (mediaRecorder) {
       mediaRecorder.stop();
       mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+      if (speechRecognition) {
+        speechRecognition.stop();
+      }
       setIsRecording(false);
       setIsPaused(false);
       setMediaRecorder(null);
+      setSpeechRecognition(null);
     }
   };
 
   const pauseRecording = () => {
     if (mediaRecorder && mediaRecorder.state === "recording") {
       mediaRecorder.pause();
+      if (speechRecognition) {
+        speechRecognition.stop();
+      }
       setIsPaused(true);
       toast({
         title: "Gravação pausada",
@@ -137,6 +184,9 @@ export const useRecording = (apiKey: string) => {
   const resumeRecording = () => {
     if (mediaRecorder && mediaRecorder.state === "paused") {
       mediaRecorder.resume();
+      if (speechRecognition) {
+        speechRecognition.start();
+      }
       setIsPaused(false);
       toast({
         title: "Gravação retomada",
