@@ -5,8 +5,15 @@ import { playIdentificationPrompt } from "@/services/audioService";
 import { handleNameRecognition } from "@/services/nameRecognitionService";
 import { useRecordingState } from "./useRecordingState";
 import { useTranscriptionHandler } from "./useTranscriptionHandler";
+import { MeetingMinutes } from "@/types/meeting";
 
-export const useRecording = (apiKey: string) => {
+interface UseRecordingProps {
+  apiKey: string;
+  minutes?: MeetingMinutes;
+  onMinutesUpdate?: (minutes: MeetingMinutes) => void;
+}
+
+export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingProps) => {
   const { toast } = useToast();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -30,6 +37,8 @@ export const useRecording = (apiKey: string) => {
     setIsTranscribing,
     setTranscriptionSegments,
     recordingStartTime,
+    minutes,
+    onMinutesUpdate,
   });
 
   const startRecording = useCallback(async (identificationEnabled: boolean) => {

@@ -36,7 +36,11 @@ const RecordingContainer = () => {
     stopRecording,
     pauseRecording,
     resumeRecording,
-  } = useRecording(apiKey, minutes, setMinutes);
+  } = useRecording({
+    apiKey,
+    minutes,
+    onMinutesUpdate: setMinutes
+  });
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('pt-BR', {
