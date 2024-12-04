@@ -34,6 +34,30 @@ interface TranscriptionTableProps {
 }
 
 const TranscriptionTable = ({ segments, onUpdateSegments }: TranscriptionTableProps) => {
+  const getEmotionColor = (emotion: { type: string; confidence: number }) => {
+    const opacity = Math.max(0.1, Math.min(emotion.confidence, 0.3));
+    switch (emotion.type.toLowerCase()) {
+      case 'happy':
+      case 'joy':
+        return `bg-yellow-100/${Math.round(opacity * 100)} dark:bg-yellow-900/${Math.round(opacity * 100)}`;
+      case 'sad':
+      case 'sadness':
+        return `bg-blue-100/${Math.round(opacity * 100)} dark:bg-blue-900/${Math.round(opacity * 100)}`;
+      case 'angry':
+      case 'anger':
+        return `bg-red-100/${Math.round(opacity * 100)} dark:bg-red-900/${Math.round(opacity * 100)}`;
+      case 'neutral':
+        return '';
+      default:
+        return `bg-gray-100/${Math.round(opacity * 100)} dark:bg-gray-900/${Math.round(opacity * 100)}`;
+    }
+  };
+
+  const getEmotionTooltip = (emotion: { type: string; confidence: number }) => {
+    const confidencePercent = Math.round(emotion.confidence * 100);
+    return `Emoção detectada: ${emotion.type} (${confidencePercent}% de confiança)`;
+  };
+
   const getTriggerColor = (type: string) => {
     switch (type) {
       case 'task':
