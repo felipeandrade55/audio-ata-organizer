@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Square } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { pipeline, AutomaticSpeechRecognitionOutput } from "@huggingface/transformers";
 
 const Index = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -21,10 +20,7 @@ const Index = () => {
         } 
       });
       
-      const recorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm',
-      });
-      
+      const recorder = new MediaRecorder(stream);
       const audioChunks: BlobPart[] = [];
 
       recorder.ondataavailable = (event) => {
@@ -32,30 +28,39 @@ const Index = () => {
       };
 
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
         setIsTranscribing(true);
         
         try {
-          const transcriber = await pipeline(
-            "automatic-speech-recognition",
-            "openai/whisper-small",
-            { device: "cpu" }
-          );
-
-          // Convert audio to proper format
-          const audioContext = new AudioContext();
+          // Convert audio to ArrayBuffer
           const arrayBuffer = await audioBlob.arrayBuffer();
+          const audioContext = new AudioContext({ sampleRate: 16000 });
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
           
-          // Convert to mono and get the samples
-          const samples = audioBuffer.getChannelData(0);
+          // Get audio data as Float32Array
+          const audioData = audioBuffer.getChannelData(0);
           
-          const result = await transcriber(samples);
-          const transcriptionText = Array.isArray(result) 
-            ? result[0]?.text || "" 
-            : (result as AutomaticSpeechRecognitionOutput).text;
-            
-          setTranscription(transcriptionText);
+          // Create FormData and append audio file
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'audio.wav');
+          formData.append('model', 'whisper-1');
+          formData.append('language', 'pt');
+
+          // Make request to OpenAI API
+          const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            },
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error('Falha na transcrição');
+          }
+
+          const result = await response.json();
+          setTranscription(result.text);
           
           toast({
             title: "Transcrição concluída",
