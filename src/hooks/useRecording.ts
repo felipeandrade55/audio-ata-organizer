@@ -43,6 +43,16 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
     onMinutesUpdate,
   });
 
+  const handleBackgroundNoise = useCallback((isNoisy: boolean) => {
+    if (isNoisy) {
+      toast({
+        title: "Aviso de Ruído",
+        description: "Foi detectado muito ruído de fundo. Isso pode afetar a qualidade da transcrição.",
+        duration: 3000,
+      });
+    }
+  }, [toast]);
+
   const startRecording = useCallback(async (identificationEnabled: boolean) => {
     if (!apiKey) {
       toast({
@@ -61,6 +71,7 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
 
       // Initialize audio preprocessor
       audioPreprocessorRef.current = createAudioPreprocessor();
+      audioPreprocessorRef.current.setNoiseCallback(handleBackgroundNoise);
 
       const rawStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -125,7 +136,7 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
         variant: "destructive",
       });
     }
-  }, [apiKey, handleTranscription, toast, setIsRecording, setIsPaused, setRecordingStartTime]);
+  }, [apiKey, handleTranscription, toast, setIsRecording, setIsPaused, setRecordingStartTime, handleBackgroundNoise]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current) {
@@ -179,6 +190,7 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
     isPaused,
     isTranscribing,
     transcriptionSegments,
+    recordingStartTime,
     startRecording,
     stopRecording,
     pauseRecording,

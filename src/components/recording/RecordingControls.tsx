@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Pause, Play } from "lucide-react";
 import { motion } from "framer-motion";
+import RecordingTimer from "./RecordingTimer";
+import { useToast } from "@/hooks/use-toast";
 
 interface RecordingControlsProps {
   isRecording: boolean;
   isPaused: boolean;
   isTranscribing: boolean;
+  startTime: number | null;
   onStartRecording: () => void;
   onStopRecording: () => void;
   onPauseRecording: () => void;
@@ -17,12 +20,14 @@ const RecordingControls = ({
   isRecording,
   isPaused,
   isTranscribing,
+  startTime,
   onStartRecording,
   onStopRecording,
   onPauseRecording,
   onResumeRecording,
 }: RecordingControlsProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { toast } = useToast();
 
   return (
     <motion.div 
@@ -51,35 +56,42 @@ const RecordingControls = ({
             </motion.div>
           </Button>
         ) : (
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={onStopRecording}
-              variant="destructive"
-              className="shadow-lg hover:shadow-xl transition-all duration-300"
-              size="lg"
-            >
-              <Square className="w-5 h-5 mr-2" />
-              Parar
-            </Button>
-            
-            <Button
-              onClick={isPaused ? onResumeRecording : onPauseRecording}
-              variant="outline"
-              className="shadow-md hover:shadow-lg transition-all duration-300"
-              size="lg"
-            >
-              {isPaused ? (
-                <>
-                  <Play className="w-5 h-5 mr-2" />
-                  Retomar
-                </>
-              ) : (
-                <>
-                  <Pause className="w-5 h-5 mr-2" />
-                  Pausar
-                </>
-              )}
-            </Button>
+          <div className="flex flex-col items-center gap-4">
+            <RecordingTimer
+              isRecording={isRecording}
+              isPaused={isPaused}
+              startTime={startTime}
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={onStopRecording}
+                variant="destructive"
+                className="shadow-lg hover:shadow-xl transition-all duration-300"
+                size="lg"
+              >
+                <Square className="w-5 h-5 mr-2" />
+                Parar
+              </Button>
+              
+              <Button
+                onClick={isPaused ? onResumeRecording : onPauseRecording}
+                variant="outline"
+                className="shadow-md hover:shadow-lg transition-all duration-300"
+                size="lg"
+              >
+                {isPaused ? (
+                  <>
+                    <Play className="w-5 h-5 mr-2" />
+                    Retomar
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-5 h-5 mr-2" />
+                    Pausar
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </div>

@@ -27,6 +27,10 @@ export class AudioPreprocessingService implements AudioProcessor {
     this.frequencyAnalyzer = new FrequencyAnalyzerService(this.context, analyzerConfig);
   }
 
+  setNoiseCallback(callback: (isNoisy: boolean) => void) {
+    this.frequencyAnalyzer.setNoiseCallback(callback);
+  }
+
   async processAudioStream(stream: MediaStream): Promise<MediaStream> {
     const source = this.context.createMediaStreamSource(stream);
     const destination = this.context.createMediaStreamDestination();
