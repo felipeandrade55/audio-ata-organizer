@@ -19,15 +19,6 @@ export const useTranscriptionHandler = ({
   const { toast } = useToast();
 
   const handleTranscription = useCallback(async (audioBlob: Blob) => {
-    if (!recordingStartTime || Date.now() - recordingStartTime < 100) {
-      toast({
-        title: "Aviso",
-        description: "A gravação é muito curta. Por favor, grave por mais tempo.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsTranscribing(true);
 
     try {
@@ -68,7 +59,7 @@ export const useTranscriptionHandler = ({
     } finally {
       setIsTranscribing(false);
     }
-  }, [apiKey, recordingStartTime, setIsTranscribing, setTranscriptionSegments, toast]);
+  }, [apiKey, setIsTranscribing, setTranscriptionSegments, toast]);
 
   return { handleTranscription };
 };
