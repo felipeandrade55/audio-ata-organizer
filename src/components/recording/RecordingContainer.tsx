@@ -36,6 +36,7 @@ const RecordingContainer = () => {
     stopRecording,
     pauseRecording,
     resumeRecording,
+    recordingStartTime,
   } = useRecording({
     apiKey,
     minutes,
@@ -100,6 +101,7 @@ const RecordingContainer = () => {
                   isRecording={isRecording}
                   isPaused={isPaused}
                   isTranscribing={isTranscribing}
+                  startTime={recordingStartTime}
                   onStartRecording={handleStartRecording}
                   onStopRecording={stopRecording}
                   onPauseRecording={pauseRecording}
