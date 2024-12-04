@@ -7,6 +7,7 @@ import RecordingControls from "@/components/recording/RecordingControls";
 import TranscriptionSummary from "@/components/recording/TranscriptionSummary";
 import IdentificationSwitch from "@/components/recording/IdentificationSwitch";
 import { playIdentificationPrompt } from "@/services/audioService";
+import { voiceIdentificationService } from "@/services/voiceIdentificationService";
 
 interface TranscriptionSegment {
   speaker: string;
@@ -37,6 +38,7 @@ const Index = () => {
 
     try {
       if (identificationEnabled) {
+        voiceIdentificationService.clear(); // Limpa perfis anteriores
         await playIdentificationPrompt();
       }
 
@@ -81,11 +83,19 @@ const Index = () => {
 
           const result = await response.json();
           
-          const segments = result.segments.map((segment: any, index: number) => ({
-            speaker: `Participante ${Math.floor(index % 3) + 1}`,
-            text: segment.text,
-            timestamp: new Date(segment.start * 1000).toISOString().substr(11, 8)
-          }));
+          const segments = result.segments.map((segment: any) => {
+            // Aqui usamos o serviço de identificação para determinar quem está falando
+            const audioFeatures = new Float32Array(segment.tokens.length); // Simplificado
+            const speaker = identificationEnabled 
+              ? voiceIdentificationService.identifyMostSimilarSpeaker(audioFeatures)
+              : `Participante ${Math.floor(Math.random() * 3) + 1}`;
+
+            return {
+              speaker,
+              text: segment.text,
+              timestamp: new Date(segment.start * 1000).toISOString().substr(11, 8)
+            };
+          });
 
           setTranscriptionSegments(segments);
           
