@@ -16,12 +16,10 @@ export const transcribeWithGoogleCloud = async (
     });
 
     // Configure request for Google Cloud Speech-to-Text
-    const response = await fetch('https://speech.googleapis.com/v1/speech:recognize', {
+    const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`, // Using the API key as Bearer token
         'Content-Type': 'application/json',
-        'X-Goog-Api-Key': apiKey, // Also include as API key header
       },
       body: JSON.stringify({
         config: {
