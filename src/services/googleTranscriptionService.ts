@@ -5,6 +5,10 @@ export const transcribeWithGoogleCloud = async (
   apiKey: string
 ): Promise<TranscriptionSegment[]> => {
   try {
+    if (!apiKey || apiKey === 'YOUR_GOOGLE_API_KEY' || apiKey.includes('*')) {
+      throw new Error('Invalid Google Cloud API key. Please update the API key in the Supabase settings.');
+    }
+
     // Convert blob to base64
     const audioBytes = await new Promise<string>((resolve) => {
       const reader = new FileReader();
@@ -24,7 +28,7 @@ export const transcribeWithGoogleCloud = async (
       config: {
         encoding: audioBlob.type.includes('webm') ? 'WEBM_OPUS' : 'LINEAR16',
         sampleRateHertz: 48000,
-        audioChannelCount: 2, // Set to match the audio input
+        audioChannelCount: 2,
         languageCode: 'pt-BR',
         enableWordTimeOffsets: true,
         enableAutomaticPunctuation: true,
@@ -37,10 +41,6 @@ export const transcribeWithGoogleCloud = async (
 
     console.log("Request config:", JSON.stringify(requestBody.config, null, 2));
 
-    if (!apiKey) {
-      throw new Error('API key is required for Google Cloud Speech-to-Text');
-    }
-
     // Use API key as query parameter
     const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
       method: 'POST',
@@ -50,18 +50,29 @@ export const transcribeWithGoogleCloud = async (
       body: JSON.stringify(requestBody)
     });
 
+    const responseText = await response.text();
+    console.log("Google Cloud API Response:", responseText);
+
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Error parsing Google Cloud API response:', e);
+      throw new Error('Failed to parse Google Cloud API response');
+    }
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Google Cloud API Error Response:', errorData);
+      console.error('Google Cloud API Error Response:', responseData);
+      
+      const errorMessage = responseData.error?.message || 'Unknown error occurred';
+      const errorDetails = responseData.error?.details?.[0]?.reason || '';
+      
       throw new Error(
-        errorData.error?.message || 
-        'Falha na transcrição com Google Cloud. Verifique se a chave da API está correta e tem as permissões necessárias.'
+        `Google Cloud API Error: ${errorMessage}${errorDetails ? ` (${errorDetails})` : ''}\n` +
+        'Please verify that your Google Cloud API key is valid and has the Speech-to-Text API enabled.'
       );
     }
 
-    const result = await response.json();
-    console.log("Resultado da transcrição (Google Cloud):", result);
-    
     // Process the result and convert to our system's format
     const segments: TranscriptionSegment[] = [];
     let currentSegment: TranscriptionSegment = {
@@ -70,8 +81,8 @@ export const transcribeWithGoogleCloud = async (
       text: '',
     };
 
-    if (result.results && result.results.length > 0) {
-      result.results.forEach((result: any) => {
+    if (responseData.results && responseData.results.length > 0) {
+      responseData.results.forEach((result: any) => {
         const alternatives = result.alternatives[0];
         if (alternatives && alternatives.words) {
           alternatives.words.forEach((word: any) => {
