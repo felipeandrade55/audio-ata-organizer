@@ -17,6 +17,7 @@ const RecordingContainer = () => {
   const [identificationEnabled, setIdentificationEnabled] = useState(false);
   const [transcriptionService, setTranscriptionService] = useState<'openai' | 'google'>('openai');
   const [minutes, setMinutes] = useState<MeetingMinutes>({
+    id: crypto.randomUUID(), // Generate a unique ID for new meetings
     date: new Date().toLocaleDateString('pt-BR'),
     startTime: new Date().toLocaleTimeString('pt-BR'),
     endTime: '',

@@ -65,7 +65,7 @@ export const analyzeTranscription = async (
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4",
         messages: [
           {
             role: "system",
@@ -93,6 +93,7 @@ export const analyzeTranscription = async (
     const currentTime = new Date().toLocaleTimeString("pt-BR");
 
     return {
+      id: crypto.randomUUID(), // Generate a unique ID for the meeting
       date: currentDate,
       startTime: currentTime,
       endTime: currentTime,
