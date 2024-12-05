@@ -6,16 +6,60 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import AuthForm from "@/components/auth/AuthForm";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { MeetingMinutes } from "@/types/meeting";
+import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const { user } = useSupabase();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [minutes, setMinutes] = useState<MeetingMinutes[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      fetchMinutes();
+    }
+  }, [user]);
+
+  const fetchMinutes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('meeting_minutes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setMinutes(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar atas:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as atas.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast({
       title: "Logout realizado com sucesso",
       description: "Até logo!",
+    });
+  };
+
+  const handleMinuteClick = (minute: MeetingMinutes) => {
+    navigate('/transcription', { 
+      state: { 
+        minutes: minute,
+        date: minute.date,
+        segments: [] // Você pode adicionar os segmentos se necessário
+      } 
     });
   };
 
@@ -79,6 +123,7 @@ const Index = () => {
                   Sair
                 </Button>
               </div>
+
               <div className="border-t border-gray-200 dark:border-gray-700 p-6">
                 <motion.div 
                   initial={{ opacity: 0, x: -20 }}
@@ -103,6 +148,37 @@ const Index = () => {
                   </div>
                 </motion.div>
                 <RecordingContainer />
+              </div>
+
+              {/* Seção de Atas */}
+              <div className="border-t border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                  Suas Atas
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {minutes.map((minute) => (
+                    <motion.div
+                      key={minute.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="cursor-pointer"
+                      onClick={() => handleMinuteClick(minute)}
+                    >
+                      <Card className="p-4 hover:shadow-lg transition-shadow">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                          {minute.meeting_title}
+                        </h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {minute.date} - {minute.start_time}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
+                          {minute.summary || "Sem resumo disponível"}
+                        </p>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>
