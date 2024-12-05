@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 import RecordingHeader from "./RecordingHeader";
 import RecordingConfig from "./RecordingConfig";
 import RecordingControls from "./RecordingControls";
 import TranscriptionSummary from "./TranscriptionSummary";
 import { useRecording } from "@/hooks/useRecording";
 import { MeetingMinutes } from "@/types/meeting";
+import { supabase } from "@/integrations/supabase/client";
 
 const RecordingContainer = () => {
   const navigate = useNavigate();
-  const [apiKey, setApiKey] = useState(localStorage.getItem('openai_api_key') || '');
+  const { toast } = useToast();
+  const [apiKey, setApiKey] = useState('');
   const [identificationEnabled, setIdentificationEnabled] = useState(false);
   const [transcriptionService, setTranscriptionService] = useState<'openai' | 'google'>('openai');
   const [minutes, setMinutes] = useState<MeetingMinutes>({
@@ -34,6 +37,35 @@ const RecordingContainer = () => {
     lastModified: new Date().toISOString(),
     tags: []
   });
+
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('api_keys')
+          .select('api_key')
+          .eq('service', transcriptionService)
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setApiKey(data.api_key);
+        }
+      } catch (error) {
+        console.error('Error fetching API key:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar a chave da API. Por favor, contate o suporte.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchApiKey();
+  }, [transcriptionService, toast]);
   
   const {
     isRecording,
@@ -91,10 +123,8 @@ const RecordingContainer = () => {
           <CardContent>
             <div className="flex flex-col items-center gap-6">
               <RecordingConfig
-                apiKey={apiKey}
                 identificationEnabled={identificationEnabled}
                 transcriptionService={transcriptionService}
-                onApiKeyChange={setApiKey}
                 onIdentificationToggle={setIdentificationEnabled}
                 onServiceChange={setTranscriptionService}
               />
