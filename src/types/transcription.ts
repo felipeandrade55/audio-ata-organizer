@@ -11,3 +11,5 @@ export interface Segment {
     text: string;
   }[];
 }
+
+export type TranscriptionSegment = Segment;
