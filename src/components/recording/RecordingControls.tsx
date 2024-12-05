@@ -56,7 +56,9 @@ const RecordingControls = ({
       setAnalyser(analyserNode);
 
       const intervalId = window.setInterval(() => {
-        checkNoiseLevel(analyserNode);
+        if (isRecording && !isPaused) {
+          checkNoiseLevel(analyserNode);
+        }
       }, 2000);
 
       setNoiseCheckInterval(intervalId);
@@ -69,11 +71,9 @@ const RecordingControls = ({
     const dataArray = new Float32Array(analyserNode.frequencyBinCount);
     analyserNode.getFloatFrequencyData(dataArray);
 
-    // Calcula o nível médio de ruído
     const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
     
-    // O valor -50 é um limiar ajustável para determinar ruído excessivo
-    if (average > -50) {
+    if (average > -50 && isRecording && !isPaused) {
       toast({
         title: "Aviso de Ruído",
         description: "Foi detectado muito ruído de fundo. Isso pode afetar a qualidade da transcrição.",
