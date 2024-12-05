@@ -13,7 +13,6 @@ interface UseRecordingProps {
 }
 
 export const useRecording = ({ apiKey, transcriptionService, minutes, onMinutesUpdate }: UseRecordingProps) => {
-  const { toast } = useToast();
   const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
   
   const {
@@ -61,10 +60,6 @@ export const useRecording = ({ apiKey, transcriptionService, minutes, onMinutesU
       setIsRecording(true);
       setIsPaused(false);
       setAudioChunks([]);
-      toast({
-        title: "Gravação iniciada",
-        description: "O áudio está sendo pré-processado para melhor qualidade.",
-      });
     }
   };
 
