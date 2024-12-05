@@ -16,32 +16,36 @@ export const transcribeWithGoogleCloud = async (
     });
 
     console.log("Enviando áudio para transcrição (Google Cloud)...");
+    console.log("Audio format:", audioBlob.type);
 
     // Configure request for Google Cloud Speech-to-Text
+    const requestBody = {
+      config: {
+        encoding: audioBlob.type.includes('webm') ? 'WEBM_OPUS' : 'LINEAR16',
+        sampleRateHertz: 48000,
+        languageCode: 'pt-BR',
+        enableWordTimeOffsets: true,
+        enableAutomaticPunctuation: true,
+        model: 'default',
+      },
+      audio: {
+        content: audioBytes
+      }
+    };
+
+    console.log("Request config:", JSON.stringify(requestBody.config, null, 2));
+
     const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        config: {
-          encoding: 'WEBM_OPUS',
-          sampleRateHertz: 48000,
-          audioChannelCount: 2,
-          languageCode: 'pt-BR',
-          enableWordTimeOffsets: true,
-          enableAutomaticPunctuation: true,
-          model: 'default',
-        },
-        audio: {
-          content: audioBytes,
-        },
-      }),
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Google Cloud API Error:', errorData);
+      console.error('Google Cloud API Error Response:', errorData);
       throw new Error(errorData.error?.message || 'Falha na transcrição com Google Cloud');
     }
 
@@ -61,7 +65,7 @@ export const transcribeWithGoogleCloud = async (
         const alternatives = result.alternatives[0];
         if (alternatives && alternatives.words) {
           alternatives.words.forEach((word: any) => {
-            const startTime = parseFloat(word.startTime.seconds || 0);
+            const startTime = parseFloat(word.startTime.replace('s', ''));
             const minutes = Math.floor(startTime / 60);
             const seconds = Math.floor(startTime % 60);
             const timestamp = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -78,7 +82,6 @@ export const transcribeWithGoogleCloud = async (
             }
           });
         } else if (alternatives && alternatives.transcript) {
-          // Se não houver informações de palavras individuais, use a transcrição completa
           currentSegment.text = alternatives.transcript;
           segments.push({ ...currentSegment });
         }
