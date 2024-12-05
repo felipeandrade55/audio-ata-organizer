@@ -15,6 +15,7 @@ import { MeetingMinutes } from "@/types/meeting";
 import { Edit2 } from "lucide-react";
 import { analyzeTranscription } from "@/services/aiAnalysisService";
 import { motion, AnimatePresence } from "framer-motion";
+import { exportToFormat } from "@/utils/exportUtils";
 
 const TranscriptionDetail = () => {
   const location = useLocation();
@@ -134,6 +135,21 @@ const TranscriptionDetail = () => {
     },
   ]);
 
+  const handleExportTxt = () => {
+    const { segments, date } = location.state;
+    exportToFormat(segments, date, 'txt');
+  };
+
+  const handleExportPdf = () => {
+    const { segments, date } = location.state;
+    exportToFormat(segments, date, 'pdf');
+  };
+
+  const handleExportExcel = () => {
+    const { segments, date } = location.state;
+    exportToFormat(segments, date, 'excel');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className={`container mx-auto px-2 py-4 sm:px-4 sm:py-6 ${isMobile ? 'max-w-full' : 'max-w-7xl'}`}>
@@ -142,6 +158,9 @@ const TranscriptionDetail = () => {
             <TranscriptionHeader
               date={date}
               onBack={() => navigate(-1)}
+              onExportTxt={handleExportTxt}
+              onExportPdf={handleExportPdf}
+              onExportExcel={handleExportExcel}
             />
             
             <TranscriptionActions date={date} segments={segments} />

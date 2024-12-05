@@ -23,7 +23,7 @@ interface TranscriptionMetadataProps {
     role: string;
     status: "pending" | "approved" | "rejected";
   }>;
-  onRestoreVersion: (version: typeof versions[0]) => void;
+  onRestoreVersion: (version: TranscriptionMetadataProps["versions"][0]) => void;
   onAddComment: (content: string) => void;
   onApprove: () => void;
   onReject: () => void;
