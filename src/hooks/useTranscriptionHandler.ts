@@ -39,6 +39,7 @@ export const useTranscriptionHandler = ({
 
       const cleanApiKey = apiKey.trim();
       console.log(`Usando chave ${transcriptionService} com comprimento:`, cleanApiKey.length);
+      console.log('Primeiros caracteres da chave:', cleanApiKey.substring(0, 5));
 
       let segments: TranscriptionSegment[];
 
@@ -51,6 +52,7 @@ export const useTranscriptionHandler = ({
         formData.append('language', 'pt');
         formData.append('response_format', 'verbose_json');
 
+        console.log('Enviando requisição para OpenAI...');
         const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
           method: 'POST',
           headers: {
@@ -59,7 +61,16 @@ export const useTranscriptionHandler = ({
           body: formData,
         });
 
-        const responseData = await response.json();
+        const responseText = await response.text();
+        console.log('Resposta bruta da API:', responseText);
+
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (e) {
+          console.error('Erro ao parsear resposta:', e);
+          throw new Error('Erro ao processar resposta da API');
+        }
 
         if (!response.ok) {
           console.error('Erro na resposta da API:', responseData);
