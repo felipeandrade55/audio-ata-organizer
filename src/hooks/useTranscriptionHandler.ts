@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { processTranscriptionResult, updateMinutesFromTranscription } from "@/services/transcriptionService";
 import { transcribeWithGoogleCloud } from "@/services/googleTranscriptionService";
 import { TranscriptionSegment } from "@/types/transcription";
@@ -67,7 +67,7 @@ export const useTranscriptionHandler = ({
           if (errorData.error?.message) {
             errorMessage = `Erro: ${errorData.error.message}`;
             if (errorData.error.code === 'invalid_api_key') {
-              errorMessage = 'Chave API inválida. Por favor, verifique a configuração.';
+              errorMessage = 'Chave API inválida. Por favor, verifique a configuração no Supabase.';
             }
           }
           

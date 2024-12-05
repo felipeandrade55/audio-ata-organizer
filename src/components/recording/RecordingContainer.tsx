@@ -41,7 +41,7 @@ const RecordingContainer = () => {
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
-        console.log('Fetching API key for service:', transcriptionService);
+        console.log('Buscando chave API para o serviço:', transcriptionService);
         const { data, error } = await supabase
           .from('api_keys')
           .select('api_key')
@@ -49,22 +49,23 @@ const RecordingContainer = () => {
           .single();
 
         if (error) {
-          console.error('Error fetching API key:', error);
+          console.error('Erro ao buscar chave API:', error);
           throw error;
         }
 
         if (!data?.api_key) {
-          console.error('No API key found for service:', transcriptionService);
-          throw new Error(`No API key found for ${transcriptionService}`);
+          console.error('Nenhuma chave API encontrada para o serviço:', transcriptionService);
+          throw new Error(`Nenhuma chave API encontrada para ${transcriptionService}`);
         }
 
-        console.log(`${transcriptionService} API key found with length:`, data.api_key.length);
-        setApiKey(data.api_key);
+        const cleanApiKey = data.api_key.trim();
+        console.log(`Chave ${transcriptionService} encontrada com comprimento:`, cleanApiKey.length);
+        setApiKey(cleanApiKey);
       } catch (error) {
-        console.error('Error fetching API key:', error);
+        console.error('Erro ao buscar chave API:', error);
         toast({
           title: "Erro na Configuração",
-          description: `Chave da API ${transcriptionService} não encontrada ou inválida. Por favor, verifique a configuração.`,
+          description: `Chave da API ${transcriptionService} não encontrada ou inválida. Por favor, verifique a configuração no Supabase.`,
           variant: "destructive",
         });
         setApiKey('');
@@ -124,7 +125,7 @@ const RecordingContainer = () => {
     if (!apiKey) {
       toast({
         title: "Erro de Configuração",
-        description: `Por favor, configure a chave da API ${transcriptionService} antes de iniciar a gravação.`,
+        description: `Por favor, configure a chave da API ${transcriptionService} no Supabase antes de iniciar a gravação.`,
         variant: "destructive",
       });
       return;
