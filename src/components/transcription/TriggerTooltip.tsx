@@ -1,9 +1,9 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Edit2, Save, AlertTriangle, Lightbulb, Clock, FileText, Scale, Lock, Handshake } from "lucide-react";
+import { Edit2, Save, AlertTriangle, Lightbulb, Clock, FileText, Scale, Lock, Handshake, CalendarDays, Pencil, UserCog } from "lucide-react";
 
 interface TriggerTooltipProps {
   trigger: {
-    type: 'task' | 'reminder' | 'decision' | 'risk' | 'highlight' | 'deadline' | 'document' | 'legal' | 'confidential' | 'agreement';
+    type: 'task' | 'reminder' | 'decision' | 'risk' | 'highlight' | 'deadline' | 'document' | 'legal' | 'confidential' | 'agreement' | 'followup' | 'schedule' | 'note';
     text: string;
     context?: string;
   };
@@ -32,6 +32,12 @@ export const TriggerTooltip = ({ trigger }: TriggerTooltipProps) => {
         return <Lock className="h-4 w-4 text-rose-500" />;
       case 'agreement':
         return <Handshake className="h-4 w-4 text-emerald-500" />;
+      case 'followup':
+        return <UserCog className="h-4 w-4 text-violet-500" />;
+      case 'schedule':
+        return <CalendarDays className="h-4 w-4 text-teal-500" />;
+      case 'note':
+        return <Pencil className="h-4 w-4 text-amber-500" />;
       default:
         return null;
     }
@@ -49,6 +55,9 @@ export const TriggerTooltip = ({ trigger }: TriggerTooltipProps) => {
       legal: 'Base Legal',
       confidential: 'Confidencial',
       agreement: 'Acordo',
+      followup: 'Pendência do Cliente',
+      schedule: 'Agendamento',
+      note: 'Anotação',
     };
     return `${typeLabels[trigger.type]}: ${trigger.text}`;
   };
