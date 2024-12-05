@@ -34,7 +34,11 @@ const RecordingConfig = ({
 
       <div className="space-y-2">
         <Label>Serviço de Transcrição</Label>
-        <Select value={transcriptionService} onValueChange={onServiceChange}>
+        <Select 
+          value={transcriptionService} 
+          onValueChange={onServiceChange}
+          defaultValue="openai"
+        >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o serviço" />
           </SelectTrigger>
