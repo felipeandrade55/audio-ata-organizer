@@ -7,21 +7,23 @@ import { useToast } from "@/components/ui/use-toast";
 import { MeetingMinutes } from "@/types/meeting";
 import { motion, AnimatePresence } from "framer-motion";
 
-export const MinutesSection = () => {
+interface MinutesSectionProps {
+  minutes: MeetingMinutes;
+  onMinutesUpdate: (minutes: MeetingMinutes) => void;
+}
+
+export const MinutesSection = ({ minutes, onMinutesUpdate }: MinutesSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [currentMinutes, setCurrentMinutes] = useState<MeetingMinutes | null>(null);
   const { toast } = useToast();
 
   const handleSave = (updatedMinutes: MeetingMinutes) => {
-    setCurrentMinutes(updatedMinutes);
+    onMinutesUpdate(updatedMinutes);
     setIsEditing(false);
     toast({
       title: "Ata atualizada",
       description: "As alterações foram salvas com sucesso.",
     });
   };
-
-  if (!currentMinutes) return null;
 
   return (
     <>
@@ -35,15 +37,29 @@ export const MinutesSection = () => {
         </Button>
       </div>
       
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isEditing ? (
-          <MeetingMinutesEdit
-            minutes={currentMinutes}
-            onSave={handleSave}
-            onCancel={() => setIsEditing(false)}
-          />
+          <motion.div
+            key="edit"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <MeetingMinutesEdit
+              minutes={minutes}
+              onSave={handleSave}
+              onCancel={() => setIsEditing(false)}
+            />
+          </motion.div>
         ) : (
-          <MeetingMinutesDisplay minutes={currentMinutes} />
+          <motion.div
+            key="display"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <MeetingMinutesDisplay minutes={minutes} />
+          </motion.div>
         )}
       </AnimatePresence>
     </>

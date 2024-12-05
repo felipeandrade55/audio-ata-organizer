@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import { exportToFormat } from "@/utils/exportUtils";
 import { MinutesSection } from "./MinutesSection";
+import { MeetingMinutes } from "@/types/meeting";
 
 const TranscriptionContainer = () => {
   const location = useLocation();
@@ -23,6 +24,7 @@ const TranscriptionContainer = () => {
     speaker: string;
     text: string;
   }>>([]);
+  const [minutes, setMinutes] = useState<MeetingMinutes | null>(null);
 
   useEffect(() => {
     if (!location.state) {
@@ -35,8 +37,12 @@ const TranscriptionContainer = () => {
       return;
     }
 
-    const { segments: initialSegments } = location.state;
+    const { segments: initialSegments, minutes: initialMinutes } = location.state;
     setSegments(initialSegments);
+    if (initialMinutes) {
+      console.log("Ata recebida:", initialMinutes);
+      setMinutes(initialMinutes);
+    }
   }, [location.state, navigate, toast]);
 
   const handleExportTxt = () => {
@@ -96,7 +102,11 @@ const TranscriptionContainer = () => {
               onAddToCalendar={() => {}}
             />
 
-            <MinutesSection />
+            {minutes && (
+              <div className="mt-6">
+                <MinutesSection minutes={minutes} onMinutesUpdate={setMinutes} />
+              </div>
+            )}
 
             <div className="mt-6">
               <TranscriptionTable
