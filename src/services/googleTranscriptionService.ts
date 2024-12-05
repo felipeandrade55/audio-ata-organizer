@@ -15,6 +15,8 @@ export const transcribeWithGoogleCloud = async (
       reader.readAsDataURL(audioBlob);
     });
 
+    console.log("Enviando áudio para transcrição (Google Cloud)...");
+
     // Configure request for Google Cloud Speech-to-Text
     const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
       method: 'POST',
@@ -44,6 +46,7 @@ export const transcribeWithGoogleCloud = async (
     }
 
     const result = await response.json();
+    console.log("Resultado da transcrição (Google Cloud):", result);
     
     // Process the result and convert to our system's format
     const segments: TranscriptionSegment[] = [];
@@ -74,6 +77,10 @@ export const transcribeWithGoogleCloud = async (
               currentSegment.text += ' ' + word.word;
             }
           });
+        } else if (alternatives && alternatives.transcript) {
+          // Se não houver informações de palavras individuais, use a transcrição completa
+          currentSegment.text = alternatives.transcript;
+          segments.push({ ...currentSegment });
         }
       });
 
