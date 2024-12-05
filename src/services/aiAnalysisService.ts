@@ -1,61 +1,37 @@
 import { MeetingMinutes } from "@/types/meeting";
 
-interface AnalysisResponse {
-  meetingTitle: string;
-  location: string;
-  organizer: string;
-  participants: Array<{ name: string; role?: string }>;
-  agendaItems: Array<{
-    title: string;
-    discussion?: string;
-    responsible?: string;
-    decision?: string;
-  }>;
-  actionItems: Array<{
-    task: string;
-    responsible: string;
-    deadline: string;
-  }>;
-  summary: string;
-  nextSteps: string[];
-}
-
 export const analyzeTranscription = async (
-  transcriptionText: string,
+  transcription: string,
   apiKey: string
 ): Promise<MeetingMinutes | null> => {
-  if (!apiKey) {
-    console.error("Chave da API não fornecida");
-    return null;
-  }
-
   try {
-    console.log("Analisando transcrição:", transcriptionText);
+    console.log("Analisando transcrição com IA...");
+    console.log("Comprimento da transcrição:", transcription.length);
+    console.log("Primeiros 100 caracteres:", transcription.substring(0, 100));
+
+    const currentDate = new Date().toLocaleDateString("pt-BR");
 
     const prompt = `
-      Analise o texto desta transcrição de reunião entre advogado e cliente e retorne APENAS um objeto JSON válido com a seguinte estrutura, sem texto adicional:
+      Analise a transcrição abaixo e extraia as seguintes informações:
+      - Título da reunião
+      - Participantes e seus papéis
+      - Itens da agenda discutidos
+      - Ações necessárias
+      - Resumo geral
+      - Próximos passos
+
+      Transcrição:
+      ${transcription}
+
+      Responda em formato JSON com as seguintes chaves:
       {
         "meetingTitle": "string",
-        "location": "string",
-        "organizer": "string",
         "participants": [{ "name": "string", "role": "string" }],
-        "agendaItems": [{ 
-          "title": "string",
-          "discussion": "string",
-          "responsible": "string",
-          "decision": "string"
-        }],
-        "actionItems": [{
-          "task": "string",
-          "responsible": "string",
-          "deadline": "string"
-        }],
+        "agendaItems": [{ "title": "string", "discussion": "string", "responsible": "string", "decision": "string" }],
+        "actionItems": [{ "task": "string", "responsible": "string", "deadline": "string" }],
         "summary": "string",
         "nextSteps": ["string"]
       }
-
-      Texto da transcrição:
-      ${transcriptionText}
     `;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -65,31 +41,33 @@ export const analyzeTranscription = async (
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "Você é um assistente especializado em análise de transcrições de reuniões jurídicas. Responda APENAS com JSON válido, sem texto adicional.",
+            content:
+              "Você é um assistente especializado em analisar transcrições de reuniões e extrair informações relevantes.",
           },
           {
             role: "user",
             content: prompt,
           },
         ],
-        temperature: 0.3,
+        temperature: 0.7,
+        max_tokens: 2000,
       }),
     });
 
     if (!response.ok) {
-      throw new Error("Falha na análise da transcrição");
+      throw new Error(`OpenAI API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log("Resposta da API:", data.choices[0].message.content);
-    
-    const analysis: AnalysisResponse = JSON.parse(data.choices[0].message.content);
+    console.log("Resposta da OpenAI:", data);
 
-    const currentDate = new Date().toLocaleDateString("pt-BR");
+    const analysis = JSON.parse(data.choices[0].message.content);
+    console.log("Análise processada:", analysis);
+
     const currentTime = new Date().toLocaleTimeString("pt-BR");
 
     return {
@@ -97,19 +75,15 @@ export const analyzeTranscription = async (
       date: currentDate,
       startTime: currentTime,
       endTime: currentTime,
-      location: analysis.location,
-      meetingTitle: analysis.meetingTitle,
-      organizer: analysis.organizer,
-      participants: analysis.participants,
-      agendaItems: analysis.agendaItems,
-      actionItems: analysis.actionItems.map(item => ({
-        ...item,
-        priority: "medium",
-        status: "pending"
-      })),
-      summary: analysis.summary,
-      nextSteps: analysis.nextSteps,
-      author: "Sistema de Transcrição com IA",
+      location: "Virtual - Gravação de Áudio",
+      meetingTitle: analysis.meetingTitle || "Reunião sem título",
+      organizer: "",
+      participants: analysis.participants || [],
+      agendaItems: analysis.agendaItems || [],
+      actionItems: analysis.actionItems || [],
+      summary: analysis.summary || "",
+      nextSteps: analysis.nextSteps || [],
+      author: "Sistema de Transcrição",
       meetingType: "initial",
       confidentialityLevel: "internal",
       legalReferences: [],
@@ -117,7 +91,7 @@ export const analyzeTranscription = async (
       status: "draft",
       lastModified: new Date().toISOString(),
       tags: [],
-      apiKey: apiKey
+      apiKey: apiKey,
     };
   } catch (error) {
     console.error("Erro na análise da transcrição:", error);
