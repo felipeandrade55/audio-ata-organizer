@@ -10,11 +10,12 @@ import { createAudioPreprocessor } from "@/services/audio";
 
 interface UseRecordingProps {
   apiKey: string;
+  transcriptionService: 'openai' | 'google';
   minutes?: MeetingMinutes;
   onMinutesUpdate?: (minutes: MeetingMinutes) => void;
 }
 
-export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingProps) => {
+export const useRecording = ({ apiKey, transcriptionService, minutes, onMinutesUpdate }: UseRecordingProps) => {
   const { toast } = useToast();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -36,6 +37,7 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
 
   const { handleTranscription } = useTranscriptionHandler({
     apiKey,
+    transcriptionService,
     setIsTranscribing,
     setTranscriptionSegments,
     recordingStartTime,
@@ -57,7 +59,7 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
     if (!apiKey) {
       toast({
         title: "Erro",
-        description: "Por favor, insira sua chave da API OpenAI primeiro.",
+        description: `Por favor, insira sua chave da API ${transcriptionService === 'openai' ? 'OpenAI' : 'Google Cloud'} primeiro.`,
         variant: "destructive",
       });
       return;
@@ -136,7 +138,7 @@ export const useRecording = ({ apiKey, minutes, onMinutesUpdate }: UseRecordingP
         variant: "destructive",
       });
     }
-  }, [apiKey, handleTranscription, toast, setIsRecording, setIsPaused, setRecordingStartTime, handleBackgroundNoise]);
+  }, [apiKey, transcriptionService, handleTranscription, toast, setIsRecording, setIsPaused, setRecordingStartTime, handleBackgroundNoise]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current) {

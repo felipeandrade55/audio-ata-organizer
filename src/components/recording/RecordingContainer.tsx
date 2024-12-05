@@ -12,6 +12,7 @@ const RecordingContainer = () => {
   const navigate = useNavigate();
   const [apiKey, setApiKey] = useState(localStorage.getItem('openai_api_key') || '');
   const [identificationEnabled, setIdentificationEnabled] = useState(false);
+  const [transcriptionService, setTranscriptionService] = useState<'openai' | 'google'>('openai');
   const [minutes, setMinutes] = useState<MeetingMinutes>({
     date: new Date().toLocaleDateString('pt-BR'),
     startTime: new Date().toLocaleTimeString('pt-BR'),
@@ -39,6 +40,7 @@ const RecordingContainer = () => {
     recordingStartTime,
   } = useRecording({
     apiKey,
+    transcriptionService,
     minutes,
     onMinutesUpdate: setMinutes
   });
@@ -84,8 +86,10 @@ const RecordingContainer = () => {
               <RecordingConfig
                 apiKey={apiKey}
                 identificationEnabled={identificationEnabled}
+                transcriptionService={transcriptionService}
                 onApiKeyChange={setApiKey}
                 onIdentificationToggle={setIdentificationEnabled}
+                onServiceChange={setTranscriptionService}
               />
 
               <div className="w-full max-w-md mx-auto animate-fade-in">
