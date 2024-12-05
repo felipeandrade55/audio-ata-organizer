@@ -25,6 +25,7 @@ export const transcribeWithGoogleCloud = async (
         config: {
           encoding: 'WEBM_OPUS',
           sampleRateHertz: 48000,
+          audioChannelCount: 2,
           languageCode: 'pt-BR',
           enableWordTimeOffsets: true,
           enableAutomaticPunctuation: true,

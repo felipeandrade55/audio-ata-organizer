@@ -48,8 +48,8 @@ export const useAudioRecording = ({ onDataAvailable, transcriptionService, apiKe
 
       const rawStream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 16000,
-          channelCount: 1,
+          sampleRate: 48000,
+          channelCount: 2,
         }
       });
 
