@@ -8,7 +8,7 @@ import RecordingControls from "./RecordingControls";
 import TranscriptionSummary from "./TranscriptionSummary";
 import { useRecording } from "@/hooks/useRecording";
 import { MeetingMinutes } from "@/types/meeting";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 const RecordingContainer = () => {
   const navigate = useNavigate();
@@ -78,10 +78,29 @@ const RecordingContainer = () => {
 
   const checkTranscriptionLimit = async () => {
     try {
-      const { data, error } = await supabase.rpc('check_transcription_limit');
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (error) throw error;
+      if (!user) {
+        toast({
+          title: "Erro de Autenticação",
+          description: "Você precisa estar logado para gravar transcrições.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      console.log('Verificando limite para usuário:', user.id);
+      const { data, error } = await supabase.rpc('check_transcription_limit', {
+        user_uuid: user.id
+      });
       
+      if (error) {
+        console.error('Erro ao verificar limite:', error);
+        throw error;
+      }
+      
+      console.log('Resultado da verificação:', data);
       if (data && data[0].total_count >= 10) {
         const shouldProceed = window.confirm(
           "Você atingiu o limite de 10 transcrições na versão BETA. A transcrição mais antiga será removida para continuar. Deseja prosseguir?"
@@ -166,6 +185,17 @@ const RecordingContainer = () => {
   };
 
   const handleStartRecording = async () => {
+    // Check authentication first
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Erro de Autenticação",
+        description: "Você precisa estar logado para gravar transcrições.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!apiKey) {
       toast({
         title: "Erro de Configuração",
