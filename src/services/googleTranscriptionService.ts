@@ -40,11 +40,11 @@ export const transcribeWithGoogleCloud = async (
       throw new Error('API key is required for Google Cloud Speech-to-Text');
     }
 
-    const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize`, {
+    // Use API key as query parameter instead of Bearer token
+    const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify(requestBody)
     });
