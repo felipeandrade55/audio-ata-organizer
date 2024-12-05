@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { MeetingMinutes } from "@/types/meeting";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { ProfileSettings } from "@/components/profile/ProfileSettings";
 
 const Index = () => {
   const { user } = useSupabase();
@@ -123,15 +124,18 @@ const Index = () => {
                     <span className="font-medium text-gray-900 dark:text-gray-100">{user.email}</span>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleLogout}
-                  className="w-full sm:w-auto border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sair
-                </Button>
+                <div className="flex gap-2">
+                  <ProfileSettings />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleLogout}
+                    className="border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </Button>
+                </div>
               </div>
 
               <div className="border-t border-gray-200 dark:border-gray-700 p-6">
