@@ -17,6 +17,7 @@ export const transcribeWithGoogleCloud = async (
 
     console.log("Enviando áudio para transcrição (Google Cloud)...");
     console.log("Audio format:", audioBlob.type);
+    console.log("API Key length:", apiKey?.length || 0);
 
     // Configure request for Google Cloud Speech-to-Text
     const requestBody = {
@@ -35,10 +36,15 @@ export const transcribeWithGoogleCloud = async (
 
     console.log("Request config:", JSON.stringify(requestBody.config, null, 2));
 
-    const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
+    if (!apiKey) {
+      throw new Error('API key is required for Google Cloud Speech-to-Text');
+    }
+
+    const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify(requestBody)
     });
@@ -46,7 +52,10 @@ export const transcribeWithGoogleCloud = async (
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Google Cloud API Error Response:', errorData);
-      throw new Error(errorData.error?.message || 'Falha na transcrição com Google Cloud');
+      throw new Error(
+        errorData.error?.message || 
+        'Falha na transcrição com Google Cloud. Verifique se a chave da API está correta e tem as permissões necessárias.'
+      );
     }
 
     const result = await response.json();
