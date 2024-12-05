@@ -23,8 +23,8 @@ export const transcribeWithGoogleCloud = async (
       },
       body: JSON.stringify({
         config: {
-          encoding: 'LINEAR16',
-          sampleRateHertz: 16000,
+          encoding: 'WEBM_OPUS',
+          sampleRateHertz: 48000,
           languageCode: 'pt-BR',
           enableWordTimeOffsets: true,
           enableAutomaticPunctuation: true,
