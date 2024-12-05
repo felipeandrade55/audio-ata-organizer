@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { User, Users } from "lucide-react";
-import { Participant } from "@/types/meeting";
+import { MeetingParticipant } from "@/types/meeting";
 
 interface ParticipantsListProps {
-  participants: Participant[];
+  participants: MeetingParticipant[];
 }
 
 const ParticipantsList = ({ participants }: ParticipantsListProps) => {
