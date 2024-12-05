@@ -1,18 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Clock, Users } from "lucide-react";
+import { ArrowRight, Clock, Users, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface TranscriptionSummaryProps {
   duration: string;
   participantCount: number;
   onViewFullTranscription: () => void;
+  isTranscribing: boolean;
 }
 
 const TranscriptionSummary = ({
   duration,
   participantCount,
   onViewFullTranscription,
+  isTranscribing,
 }: TranscriptionSummaryProps) => {
   return (
     <Card className="w-full mt-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-gray-200 dark:border-gray-700">
@@ -40,11 +42,23 @@ const TranscriptionSummary = ({
             </div>
           </div>
           <Button 
-            onClick={onViewFullTranscription} 
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            onClick={onViewFullTranscription}
+            disabled={isTranscribing}
+            className={`w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 ${
+              isTranscribing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            Ver Transcrição Completa
-            <ArrowRight className="ml-2 h-4 w-4" />
+            {isTranscribing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processando transcrição...
+              </>
+            ) : (
+              <>
+                Ver Transcrição Completa
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
           </Button>
         </motion.div>
       </CardContent>

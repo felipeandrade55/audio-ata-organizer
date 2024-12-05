@@ -118,6 +118,7 @@ const RecordingContainer = () => {
                     duration={getTotalDuration()}
                     participantCount={getParticipantCount()}
                     onViewFullTranscription={viewFullTranscription}
+                    isTranscribing={isTranscribing}
                   />
                 </div>
               )}

@@ -94,6 +94,14 @@ const RecordingControls = ({
     setAnalyser(null);
   };
 
+  const handleStopRecording = async () => {
+    await onStopRecording();
+    toast({
+      title: "Transcrição em andamento",
+      description: "A gravação foi interrompida e está sendo transcrita. Você já pode iniciar uma nova gravação.",
+    });
+  };
+
   return (
     <motion.div 
       className="flex flex-col items-center gap-4"
@@ -105,7 +113,6 @@ const RecordingControls = ({
         {!isRecording ? (
           <Button
             onClick={onStartRecording}
-            disabled={isTranscribing}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
             size="lg"
             onMouseEnter={() => setIsHovered(true)}
@@ -129,7 +136,7 @@ const RecordingControls = ({
             />
             <div className="flex items-center gap-2">
               <Button
-                onClick={onStopRecording}
+                onClick={handleStopRecording}
                 variant="destructive"
                 className="shadow-lg hover:shadow-xl transition-all duration-300"
                 size="lg"
@@ -165,10 +172,10 @@ const RecordingControls = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-sm text-muted-foreground flex items-center gap-2"
+          className="text-sm text-muted-foreground flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800"
         >
           <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
-          Transcrevendo áudio...
+          <span>Transcrevendo áudio e gerando ATA com I.A...</span>
         </motion.div>
       )}
     </motion.div>
