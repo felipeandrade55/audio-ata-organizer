@@ -45,21 +45,6 @@ const TranscriptionContainer = () => {
     }
   }, [location.state, navigate, toast]);
 
-  const handleExportTxt = () => {
-    const { segments, date } = location.state;
-    exportToFormat(segments, date, 'txt');
-  };
-
-  const handleExportPdf = () => {
-    const { segments, date } = location.state;
-    exportToFormat(segments, date, 'pdf');
-  };
-
-  const handleExportExcel = () => {
-    const { segments, date } = location.state;
-    exportToFormat(segments, date, 'excel');
-  };
-
   if (!location.state) {
     return null;
   }
@@ -71,13 +56,7 @@ const TranscriptionContainer = () => {
       <div className={`container mx-auto px-2 py-4 sm:px-4 sm:py-6 ${isMobile ? 'max-w-full' : 'max-w-7xl'}`}>
         <Card className="overflow-hidden">
           <CardContent className="p-2 sm:p-6">
-            <TranscriptionHeader
-              date={date}
-              onBack={() => navigate(-1)}
-              onExportTxt={handleExportTxt}
-              onExportPdf={handleExportPdf}
-              onExportExcel={handleExportExcel}
-            />
+            <TranscriptionHeader onBack={() => navigate(-1)} />
             
             <TranscriptionActions date={date} segments={segments} />
             
