@@ -32,6 +32,10 @@ export const useTranscriptionHandler = ({
     setIsTranscribing(true);
 
     try {
+      if (!apiKey || apiKey.trim() === '') {
+        throw new Error(`Chave da API ${transcriptionService === 'openai' ? 'OpenAI' : 'Google Cloud'} não fornecida`);
+      }
+
       let segments: TranscriptionSegment[];
 
       if (transcriptionService === 'google') {
@@ -43,16 +47,18 @@ export const useTranscriptionHandler = ({
         formData.append('language', 'pt');
         formData.append('response_format', 'verbose_json');
 
+        console.log('Enviando requisição para OpenAI com chave de comprimento:', apiKey.length);
         const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${apiKey}`,
+            'Authorization': `Bearer ${apiKey.trim()}`,
           },
           body: formData,
         });
 
         if (!response.ok) {
           const errorData = await response.json();
+          console.error('Erro na resposta da OpenAI:', errorData);
           throw new Error(errorData.error?.message || 'Falha na transcrição');
         }
 
@@ -64,7 +70,6 @@ export const useTranscriptionHandler = ({
       if (segments.length > 0) {
         console.log('Processando segmentos da transcrição');
         
-        // Atualizar a ata com os segmentos processados
         if (minutes && onMinutesUpdate) {
           const updatedMinutes = await updateMinutesFromTranscription(minutes, segments);
           const minutesWithTriggers = updateMinutesWithTriggers(updatedMinutes, 
