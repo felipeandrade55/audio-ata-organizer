@@ -24,6 +24,7 @@ export const transcribeWithGoogleCloud = async (
       config: {
         encoding: audioBlob.type.includes('webm') ? 'WEBM_OPUS' : 'LINEAR16',
         sampleRateHertz: 48000,
+        audioChannelCount: 2, // Set to match the audio input
         languageCode: 'pt-BR',
         enableWordTimeOffsets: true,
         enableAutomaticPunctuation: true,
@@ -40,7 +41,7 @@ export const transcribeWithGoogleCloud = async (
       throw new Error('API key is required for Google Cloud Speech-to-Text');
     }
 
-    // Use API key as query parameter instead of Bearer token
+    // Use API key as query parameter
     const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
       method: 'POST',
       headers: {
