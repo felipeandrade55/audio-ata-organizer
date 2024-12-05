@@ -33,13 +33,17 @@ export const useTranscriptionHandler = ({
 
     try {
       if (!apiKey || apiKey.trim() === '') {
-        throw new Error(`Chave da API ${transcriptionService === 'openai' ? 'OpenAI' : 'Google Cloud'} não fornecida`);
+        console.error(`Chave da API ${transcriptionService} não fornecida ou vazia`);
+        throw new Error(`Chave da API ${transcriptionService} não fornecida`);
       }
+
+      const cleanApiKey = apiKey.trim();
+      console.log(`Usando chave ${transcriptionService} com comprimento:`, cleanApiKey.length);
 
       let segments: TranscriptionSegment[];
 
       if (transcriptionService === 'google') {
-        segments = await transcribeWithGoogleCloud(audioBlob, apiKey);
+        segments = await transcribeWithGoogleCloud(audioBlob, cleanApiKey);
       } else {
         const formData = new FormData();
         formData.append('file', audioBlob, 'audio.wav');
@@ -47,24 +51,32 @@ export const useTranscriptionHandler = ({
         formData.append('language', 'pt');
         formData.append('response_format', 'verbose_json');
 
-        console.log('Enviando requisição para OpenAI com chave de comprimento:', apiKey.length);
         const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${apiKey.trim()}`,
+            'Authorization': `Bearer ${cleanApiKey}`,
           },
           body: formData,
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('Erro na resposta da OpenAI:', errorData);
-          throw new Error(errorData.error?.message || 'Falha na transcrição');
+          console.error('Erro na resposta da API:', errorData);
+          
+          let errorMessage = 'Falha na transcrição';
+          if (errorData.error?.message) {
+            errorMessage = `Erro: ${errorData.error.message}`;
+            if (errorData.error.code === 'invalid_api_key') {
+              errorMessage = 'Chave API inválida. Por favor, verifique a configuração.';
+            }
+          }
+          
+          throw new Error(errorMessage);
         }
 
         const result = await response.json();
         console.log('Resultado da transcrição:', result);
-        segments = await processTranscriptionResult(result, audioBlob, apiKey);
+        segments = await processTranscriptionResult(result, audioBlob, cleanApiKey);
       }
 
       if (segments.length > 0) {
