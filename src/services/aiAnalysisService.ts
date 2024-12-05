@@ -25,29 +25,18 @@ export const analyzeTranscription = async (
   apiKey: string
 ): Promise<MeetingMinutes | null> => {
   try {
+    console.log("Analisando transcrição:", transcriptionText);
+
     const prompt = `
-      Analise o texto desta transcrição de reunião e extraia as seguintes informações estruturadas:
-      
-      1. Identifique o título da reunião baseado no contexto
-      2. Identifique o local (se mencionado, caso contrário use "Reunião Virtual")
-      3. Identifique quem está organizando/apresentando a reunião
-      4. Liste todos os participantes e seus papéis (se mencionados)
-      5. Identifique os principais tópicos discutidos, incluindo:
-         - Título do tópico
-         - Resumo da discussão
-         - Responsável (se houver)
-         - Decisão tomada (se houver)
-      6. Identifique todas as tarefas definidas, incluindo:
-         - Descrição da tarefa
-         - Responsável
-         - Prazo (se mencionado)
-      7. Faça um resumo geral da reunião
-      8. Liste os próximos passos definidos
+      Analise o texto desta transcrição de reunião e extraia as informações em formato JSON.
+      Preste especial atenção a:
+      1. Tarefas mencionadas (quando alguém diz "vamos criar uma tarefa", "precisamos fazer", etc)
+      2. Decisões tomadas (quando alguém diz "ficou decidido que", etc)
+      3. Lembretes importantes (quando alguém diz "precisamos lembrar de", etc)
+      4. Riscos identificados (quando alguém menciona "existe um risco", etc)
+      5. Pontos importantes (quando alguém diz "isso é muito importante", etc)
 
-      Texto da transcrição:
-      ${transcriptionText}
-
-      Retorne APENAS um objeto JSON com a seguinte estrutura exata, sem texto adicional:
+      Retorne APENAS um objeto JSON com a seguinte estrutura, sem texto adicional ou explicações:
       {
         "meetingTitle": "string",
         "location": "string",
@@ -67,6 +56,9 @@ export const analyzeTranscription = async (
         "summary": "string",
         "nextSteps": ["string"]
       }
+
+      Texto da transcrição:
+      ${transcriptionText}
     `;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -76,18 +68,19 @@ export const analyzeTranscription = async (
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "Você é um assistente especializado em análise de transcrições de reuniões.",
+            content: "Você é um assistente especializado em análise de transcrições de reuniões. Retorne APENAS JSON válido, sem texto adicional.",
           },
           {
             role: "user",
             content: prompt,
           },
         ],
-        temperature: 0.7,
+        temperature: 0.3, // Reduzindo a temperatura para respostas mais consistentes
+        response_format: { type: "json_object" }, // Forçando resposta em JSON
       }),
     });
 
