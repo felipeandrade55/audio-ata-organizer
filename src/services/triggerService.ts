@@ -11,23 +11,28 @@ const triggers = {
     /vamos\s+criar\s+uma\s+tarefa[:\s]+(.+?)(?:\.|$)/i,
     /precisamos\s+fazer[:\s]+(.+?)(?:\.|$)/i,
     /fica\s+pendente[:\s]+(.+?)(?:\.|$)/i,
+    /tarefa[:\s]+(.+?)(?:\.|$)/i,
   ],
   reminder: [
     /precisamos\s+lembrar\s+(?:de\s+)?[:\s]+(.+?)(?:\.|$)/i,
     /não\s+podemos\s+esquecer\s+(?:de\s+)?[:\s]+(.+?)(?:\.|$)/i,
     /importante\s+lembrar[:\s]+(.+?)(?:\.|$)/i,
+    /lembrete[:\s]+(.+?)(?:\.|$)/i,
   ],
   decision: [
     /ficou\s+decidido\s+que[:\s]+(.+?)(?:\.|$)/i,
     /a\s+decisão\s+(?:é|foi)[:\s]+(.+?)(?:\.|$)/i,
+    /decidimos\s+que[:\s]+(.+?)(?:\.|$)/i,
   ],
   risk: [
     /(?:existe|há)\s+(?:um|o)\s+risco\s+(?:de|que)[:\s]+(.+?)(?:\.|$)/i,
     /precisamos\s+ter\s+cuidado\s+com[:\s]+(.+?)(?:\.|$)/i,
+    /risco[:\s]+(.+?)(?:\.|$)/i,
   ],
   highlight: [
     /isso\s+é\s+muito\s+importante[:\s]+(.+?)(?:\.|$)/i,
     /destaque\s+para[:\s]+(.+?)(?:\.|$)/i,
+    /importante[:\s]+(.+?)(?:\.|$)/i,
   ],
 };
 
@@ -58,21 +63,23 @@ export const updateMinutesWithTriggers = (
 
   matches.forEach((match) => {
     switch (match.type) {
-      case 'task':
-        updatedMinutes.actionItems.push({
+      case 'task': {
+        const newTask: ActionItem = {
           task: match.text,
           responsible: '',
           deadline: '',
-        });
+        };
+        updatedMinutes.actionItems.push(newTask);
         break;
+      }
       case 'reminder':
         if (!updatedMinutes.nextSteps.includes(match.text)) {
           updatedMinutes.nextSteps.push(match.text);
         }
         break;
       case 'decision':
-        const lastAgendaItem = updatedMinutes.agendaItems[updatedMinutes.agendaItems.length - 1];
-        if (lastAgendaItem) {
+        if (updatedMinutes.agendaItems.length > 0) {
+          const lastAgendaItem = updatedMinutes.agendaItems[updatedMinutes.agendaItems.length - 1];
           lastAgendaItem.decision = match.text;
         } else {
           updatedMinutes.agendaItems.push({
@@ -83,8 +90,16 @@ export const updateMinutesWithTriggers = (
         }
         break;
       case 'risk':
+        updatedMinutes.agendaItems.push({
+          title: 'Risco Identificado',
+          discussion: match.text,
+        });
+        break;
       case 'highlight':
-        // Estes tipos serão usados para destacar o texto na interface
+        updatedMinutes.agendaItems.push({
+          title: 'Ponto Importante',
+          discussion: match.text,
+        });
         break;
     }
   });

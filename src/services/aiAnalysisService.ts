@@ -26,20 +26,28 @@ export const analyzeTranscription = async (
 ): Promise<MeetingMinutes | null> => {
   try {
     const prompt = `
-      Analise o texto desta transcrição de reunião e extraia as seguintes informações em formato JSON:
-      - Título da reunião
-      - Local (se mencionado, caso contrário use "Reunião Virtual")
-      - Organizador/Apresentador
-      - Lista de participantes com seus papéis (se mencionados)
-      - Itens da pauta com discussões e decisões
-      - Ações definidas com responsáveis e prazos
-      - Resumo geral da reunião
-      - Próximos passos definidos
+      Analise o texto desta transcrição de reunião e extraia as seguintes informações estruturadas:
+      
+      1. Identifique o título da reunião baseado no contexto
+      2. Identifique o local (se mencionado, caso contrário use "Reunião Virtual")
+      3. Identifique quem está organizando/apresentando a reunião
+      4. Liste todos os participantes e seus papéis (se mencionados)
+      5. Identifique os principais tópicos discutidos, incluindo:
+         - Título do tópico
+         - Resumo da discussão
+         - Responsável (se houver)
+         - Decisão tomada (se houver)
+      6. Identifique todas as tarefas definidas, incluindo:
+         - Descrição da tarefa
+         - Responsável
+         - Prazo (se mencionado)
+      7. Faça um resumo geral da reunião
+      8. Liste os próximos passos definidos
 
       Texto da transcrição:
       ${transcriptionText}
 
-      Por favor, formate a resposta como um objeto JSON seguindo exatamente esta estrutura:
+      Retorne APENAS um objeto JSON com a seguinte estrutura exata, sem texto adicional:
       {
         "meetingTitle": "string",
         "location": "string",
@@ -88,6 +96,8 @@ export const analyzeTranscription = async (
     }
 
     const data = await response.json();
+    console.log("Resposta da API:", data.choices[0].message.content);
+    
     const analysis: AnalysisResponse = JSON.parse(data.choices[0].message.content);
 
     // Formata a data atual
@@ -97,7 +107,7 @@ export const analyzeTranscription = async (
     return {
       date: currentDate,
       startTime: currentTime,
-      endTime: currentTime, // Será atualizado quando a gravação terminar
+      endTime: currentTime,
       location: analysis.location,
       meetingTitle: analysis.meetingTitle,
       organizer: analysis.organizer,
