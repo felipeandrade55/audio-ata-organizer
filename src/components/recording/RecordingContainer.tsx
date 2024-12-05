@@ -41,6 +41,7 @@ const RecordingContainer = () => {
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
+        console.log('Fetching API key for service:', transcriptionService);
         const { data, error } = await supabase
           .from('api_keys')
           .select('api_key')
@@ -48,10 +49,12 @@ const RecordingContainer = () => {
           .single();
 
         if (error) {
+          console.error('Error fetching API key:', error);
           throw error;
         }
 
         if (data) {
+          console.log('API key fetched successfully');
           setApiKey(data.api_key);
         }
       } catch (error) {
