@@ -3,16 +3,18 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import TranscriptionHeader from "@/components/transcription/TranscriptionHeader";
 import TranscriptionTable from "@/components/transcription/TranscriptionTable";
+import { TranscriptionAnalysisStatus } from "@/components/transcription/TranscriptionAnalysisStatus";
 import MeetingMinutesDisplay from "@/components/meeting/MeetingMinutesDisplay";
 import MeetingMinutesEdit from "@/components/meeting/MeetingMinutesEdit";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MeetingMinutes } from "@/types/meeting";
-import { Edit2, Wand2 } from "lucide-react";
+import { Edit2 } from "lucide-react";
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import { analyzeTranscription } from "@/services/aiAnalysisService";
+import { motion, AnimatePresence } from "framer-motion";
 
 const TranscriptionDetail = () => {
   const location = useLocation();
@@ -33,7 +35,6 @@ const TranscriptionDetail = () => {
       return;
     }
 
-    // Automatically analyze transcription when component mounts
     const autoAnalyzeTranscription = async () => {
       const apiKey = localStorage.getItem('openai_api_key');
       if (!apiKey) {
@@ -56,8 +57,9 @@ const TranscriptionDetail = () => {
         if (analyzedMinutes) {
           setCurrentMinutes(analyzedMinutes);
           toast({
-            title: "Análise concluída",
+            title: "ATA Pronta! 🎉",
             description: "A ata foi preenchida automaticamente com base na transcrição.",
+            duration: 5000,
           });
         }
       } catch (error) {
@@ -185,15 +187,17 @@ const TranscriptionDetail = () => {
                 </Button>
               </div>
               
-              {isEditing ? (
-                <MeetingMinutesEdit
-                  minutes={currentMinutes}
-                  onSave={handleSave}
-                  onCancel={() => setIsEditing(false)}
-                />
-              ) : (
-                <MeetingMinutesDisplay minutes={currentMinutes} />
-              )}
+              <AnimatePresence>
+                {isEditing ? (
+                  <MeetingMinutesEdit
+                    minutes={currentMinutes}
+                    onSave={handleSave}
+                    onCancel={() => setIsEditing(false)}
+                  />
+                ) : (
+                  <MeetingMinutesDisplay minutes={currentMinutes} />
+                )}
+              </AnimatePresence>
 
               <div className="mt-6">
                 <TranscriptionTable
@@ -205,6 +209,9 @@ const TranscriptionDetail = () => {
           </CardContent>
         </Card>
       </div>
+      <AnimatePresence>
+        <TranscriptionAnalysisStatus isAnalyzing={isAnalyzing} />
+      </AnimatePresence>
     </div>
   );
 };
