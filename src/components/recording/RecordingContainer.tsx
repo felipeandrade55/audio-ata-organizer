@@ -9,13 +9,12 @@ import TranscriptionSummary from "./TranscriptionSummary";
 import { useRecording } from "@/hooks/useRecording";
 import { useTranscriptionLimit } from "@/hooks/useTranscriptionLimit";
 import { MeetingMinutes } from "@/types/meeting";
-import { supabase } from "@/lib/supabase";
+import { API_KEYS } from "@/config/apiKeys";
 
 const RecordingContainer = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { checkTranscriptionLimit } = useTranscriptionLimit();
-  const [apiKey, setApiKey] = useState('');
   const [identificationEnabled, setIdentificationEnabled] = useState(false);
   const [transcriptionService, setTranscriptionService] = useState<'openai' | 'google'>('openai');
   const [minutes, setMinutes] = useState<MeetingMinutes>({
@@ -41,43 +40,6 @@ const RecordingContainer = () => {
     tags: []
   });
 
-  useEffect(() => {
-    const fetchApiKey = async () => {
-      try {
-        console.log('Buscando chave API para o serviço:', transcriptionService);
-        const { data, error } = await supabase
-          .from('api_keys')
-          .select('api_key')
-          .eq('service', transcriptionService)
-          .single();
-
-        if (error) {
-          console.error('Erro ao buscar chave API:', error);
-          throw error;
-        }
-
-        if (!data?.api_key) {
-          console.error('Nenhuma chave API encontrada para o serviço:', transcriptionService);
-          throw new Error(`Nenhuma chave API encontrada para ${transcriptionService}`);
-        }
-
-        const cleanApiKey = data.api_key.trim();
-        console.log(`Chave ${transcriptionService} encontrada com comprimento:`, cleanApiKey.length);
-        setApiKey(cleanApiKey);
-      } catch (error) {
-        console.error('Erro ao buscar chave API:', error);
-        toast({
-          title: "Erro na Configuração",
-          description: `Chave da API ${transcriptionService} não encontrada ou inválida. Por favor, verifique a configuração no Supabase.`,
-          variant: "destructive",
-        });
-        setApiKey('');
-      }
-    };
-
-    fetchApiKey();
-  }, [transcriptionService, toast]);
-
   const {
     isRecording,
     isPaused,
@@ -89,7 +51,7 @@ const RecordingContainer = () => {
     resumeRecording,
     recordingStartTime,
   } = useRecording({
-    apiKey,
+    apiKey: API_KEYS[transcriptionService],
     transcriptionService,
     minutes,
     onMinutesUpdate: setMinutes,
@@ -126,21 +88,11 @@ const RecordingContainer = () => {
   };
 
   const handleStartRecording = async () => {
-    // Check authentication first
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: "Erro de Autenticação",
-        description: "Você precisa estar logado para gravar transcrições.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    const apiKey = API_KEYS[transcriptionService];
     if (!apiKey) {
       toast({
         title: "Erro de Configuração",
-        description: `Por favor, configure a chave da API ${transcriptionService} no Supabase antes de iniciar a gravação.`,
+        description: `Por favor, configure a chave da API ${transcriptionService} nas variáveis de ambiente antes de iniciar a gravação.`,
         variant: "destructive",
       });
       return;

@@ -31,7 +31,7 @@ export const useAudioRecording = ({ onDataAvailable, transcriptionService, apiKe
     if (!apiKey) {
       toast({
         title: "Erro",
-        description: `Por favor, insira sua chave da API ${transcriptionService === 'openai' ? 'OpenAI' : 'Google Cloud'} primeiro.`,
+        description: `Por favor, configure sua chave da API ${transcriptionService === 'openai' ? 'OpenAI' : 'Google Cloud'} nas variáveis de ambiente.`,
         variant: "destructive",
       });
       return null;
