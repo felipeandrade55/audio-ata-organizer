@@ -51,7 +51,7 @@ export const analyzeTranscription = async (
       - "isso é muito importante", "fundamental", "essencial"
       - "precisamos lembrar", "atentar para", "não podemos esquecer"
 
-      Retorne APENAS um objeto JSON com a seguinte estrutura, sem texto adicional ou explicações:
+      Retorne um objeto JSON com a seguinte estrutura:
       {
         "meetingTitle": "string",
         "location": "string",
@@ -87,7 +87,7 @@ export const analyzeTranscription = async (
         messages: [
           {
             role: "system",
-            content: "Você é um assistente especializado em análise de transcrições de reuniões jurídicas. Retorne APENAS JSON válido, sem texto adicional.",
+            content: "Você é um assistente especializado em análise de transcrições de reuniões jurídicas.",
           },
           {
             role: "user",
@@ -95,7 +95,6 @@ export const analyzeTranscription = async (
           },
         ],
         temperature: 0.3,
-        response_format: { type: "json_object" },
       }),
     });
 
