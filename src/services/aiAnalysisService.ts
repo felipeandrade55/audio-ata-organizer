@@ -28,13 +28,28 @@ export const analyzeTranscription = async (
     console.log("Analisando transcrição:", transcriptionText);
 
     const prompt = `
-      Analise o texto desta transcrição de reunião e extraia as informações em formato JSON.
+      Analise o texto desta transcrição de reunião entre advogado e cliente e extraia as informações em formato JSON.
       Preste especial atenção a:
-      1. Tarefas mencionadas (quando alguém diz "vamos criar uma tarefa", "precisamos fazer", etc)
-      2. Decisões tomadas (quando alguém diz "ficou decidido que", etc)
-      3. Lembretes importantes (quando alguém diz "precisamos lembrar de", etc)
-      4. Riscos identificados (quando alguém menciona "existe um risco", etc)
-      5. Pontos importantes (quando alguém diz "isso é muito importante", etc)
+      1. Tarefas e providências a serem tomadas
+      2. Prazos mencionados (processuais ou não)
+      3. Documentos necessários ou a serem preparados
+      4. Decisões e acordos estabelecidos
+      5. Informações confidenciais ou sigilosas
+      6. Bases legais e jurisprudência citadas
+      7. Riscos identificados
+      8. Pontos importantes destacados
+      9. Próximos passos e lembretes
+
+      Identifique especialmente quando alguém mencionar:
+      - "vamos criar uma tarefa", "precisamos fazer", "providenciar", "encaminhar"
+      - "prazo", "vence em", "data limite", "até o dia"
+      - "precisamos do documento", "anexar", "juntar", "documentação necessária"
+      - "ficou decidido que", "acordamos que", "as partes concordaram"
+      - "informação confidencial", "sigilo", "não divulgar"
+      - "base legal", "fundamento jurídico", "lei aplicável", "jurisprudência"
+      - "existe um risco", "ponto de atenção", "possível problema"
+      - "isso é muito importante", "fundamental", "essencial"
+      - "precisamos lembrar", "atentar para", "não podemos esquecer"
 
       Retorne APENAS um objeto JSON com a seguinte estrutura, sem texto adicional ou explicações:
       {
@@ -72,15 +87,15 @@ export const analyzeTranscription = async (
         messages: [
           {
             role: "system",
-            content: "Você é um assistente especializado em análise de transcrições de reuniões. Retorne APENAS JSON válido, sem texto adicional.",
+            content: "Você é um assistente especializado em análise de transcrições de reuniões jurídicas. Retorne APENAS JSON válido, sem texto adicional.",
           },
           {
             role: "user",
             content: prompt,
           },
         ],
-        temperature: 0.3, // Reduzindo a temperatura para respostas mais consistentes
-        response_format: { type: "json_object" }, // Forçando resposta em JSON
+        temperature: 0.3,
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -93,7 +108,6 @@ export const analyzeTranscription = async (
     
     const analysis: AnalysisResponse = JSON.parse(data.choices[0].message.content);
 
-    // Formata a data atual
     const currentDate = new Date().toLocaleDateString("pt-BR");
     const currentTime = new Date().toLocaleTimeString("pt-BR");
 
