@@ -1,12 +1,14 @@
 import { useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { processTranscriptionResult } from "@/services/transcriptionService";
+import { transcribeWithGoogleCloud } from "@/services/googleTranscriptionService";
 import { TranscriptionSegment } from "@/types/transcription";
 import { findTriggers, updateMinutesWithTriggers } from "@/services/triggerService";
 import { MeetingMinutes } from "@/types/meeting";
 
 interface TranscriptionHandlerProps {
   apiKey: string;
+  transcriptionService: 'openai' | 'google';
   setIsTranscribing: (value: boolean) => void;
   setTranscriptionSegments: (segments: TranscriptionSegment[]) => void;
   recordingStartTime: number | null;
@@ -16,6 +18,7 @@ interface TranscriptionHandlerProps {
 
 export const useTranscriptionHandler = ({
   apiKey,
+  transcriptionService,
   setIsTranscribing,
   setTranscriptionSegments,
   recordingStartTime,
@@ -28,28 +31,35 @@ export const useTranscriptionHandler = ({
     setIsTranscribing(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'audio.wav');
-      formData.append('model', 'whisper-1');
-      formData.append('language', 'pt');
-      formData.append('response_format', 'verbose_json');
+      let segments: TranscriptionSegment[];
 
-      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: formData,
-      });
+      if (transcriptionService === 'google') {
+        segments = await transcribeWithGoogleCloud(audioBlob, apiKey);
+      } else {
+        // OpenAI transcription (existing code)
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'audio.wav');
+        formData.append('model', 'whisper-1');
+        formData.append('language', 'pt');
+        formData.append('response_format', 'verbose_json');
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Falha na transcrição');
+        const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || 'Falha na transcrição');
+        }
+
+        const result = await response.json();
+        segments = await processTranscriptionResult(result, audioBlob, apiKey);
       }
 
-      const result = await response.json();
-      const segments = await processTranscriptionResult(result, audioBlob, apiKey);
-      
       // Processa triggers no último segmento
       if (segments.length > 0) {
         const lastSegment = segments[segments.length - 1];
@@ -86,7 +96,7 @@ export const useTranscriptionHandler = ({
     } finally {
       setIsTranscribing(false);
     }
-  }, [apiKey, setIsTranscribing, setTranscriptionSegments, toast, minutes, onMinutesUpdate]);
+  }, [apiKey, transcriptionService, setIsTranscribing, setTranscriptionSegments, toast, minutes, onMinutesUpdate]);
 
   return { handleTranscription };
 };
