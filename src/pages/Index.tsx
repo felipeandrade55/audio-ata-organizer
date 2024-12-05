@@ -34,7 +34,17 @@ const Index = () => {
         throw error;
       }
 
-      setMinutes(data || []);
+      // Transform the data to match the MeetingMinutes interface
+      const transformedData = data?.map(item => ({
+        ...item,
+        meetingTitle: item.meeting_title,
+        startTime: item.start_time,
+        endTime: item.end_time,
+        confidentialityLevel: item.confidentiality_level,
+        lastModified: item.last_modified,
+      })) || [];
+
+      setMinutes(transformedData);
     } catch (error) {
       console.error('Erro ao buscar atas:', error);
       toast({
@@ -167,10 +177,10 @@ const Index = () => {
                     >
                       <Card className="p-4 hover:shadow-lg transition-shadow">
                         <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                          {minute.meeting_title}
+                          {minute.meetingTitle}
                         </h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {minute.date} - {minute.start_time}
+                          {minute.date} - {minute.startTime}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
                           {minute.summary || "Sem resumo disponível"}
