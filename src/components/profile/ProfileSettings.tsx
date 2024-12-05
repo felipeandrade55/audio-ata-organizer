@@ -54,21 +54,49 @@ export const ProfileSettings = () => {
     if (!user?.id) return;
 
     try {
-      const { data, error } = await supabase
+      console.log('Loading profile for user:', user.id);
+      const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('name, oab, avatar_url')
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (fetchError) {
+        console.log('Error fetching profile:', fetchError);
+        if (fetchError.code === 'PGRST116') {
+          // Profile doesn't exist, create it
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert([
+              { id: user.id }
+            ])
+            .select()
+            .single();
 
-      if (data) {
-        setName(data.name || "");
-        setOab(data.oab || "");
-        setAvatarUrl(data.avatar_url || "");
+          if (createError) throw createError;
+          
+          console.log('Created new profile:', newProfile);
+          setName("");
+          setOab("");
+          setAvatarUrl("");
+          return;
+        }
+        throw fetchError;
+      }
+
+      if (existingProfile) {
+        console.log('Loaded existing profile:', existingProfile);
+        setName(existingProfile.name || "");
+        setOab(existingProfile.oab || "");
+        setAvatarUrl(existingProfile.avatar_url || "");
       }
     } catch (error: any) {
-      console.error('Error loading profile:', error.message);
+      console.error('Error in loadProfile:', error);
+      toast({
+        title: "Erro ao carregar perfil",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
