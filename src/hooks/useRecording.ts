@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast";
 import { useTranscriptionHandler } from "./useTranscriptionHandler";
 import { useAudioRecording } from "./useAudioRecording";
 import { MeetingMinutes } from "@/types/meeting";
@@ -19,7 +19,6 @@ export const useRecording = ({ apiKey, transcriptionService, minutes, onMinutesU
   const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([]);
   const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
-  const { toast } = useToast();
 
   const { handleTranscription } = useTranscriptionHandler({
     apiKey,

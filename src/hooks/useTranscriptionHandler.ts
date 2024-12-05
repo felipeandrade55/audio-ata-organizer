@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/toast";
 import { processTranscriptionResult } from "@/services/transcriptionService";
 import { transcribeWithGoogleCloud } from "@/services/googleTranscriptionService";
 import { TranscriptionSegment } from "@/types/transcription";
@@ -25,8 +25,7 @@ export const useTranscriptionHandler = ({
   minutes,
   onMinutesUpdate,
 }: TranscriptionHandlerProps) => {
-  const { toast } = useToast();
-
+  
   const handleTranscription = useCallback(async (audioBlob: Blob) => {
     setIsTranscribing(true);
 
@@ -36,7 +35,6 @@ export const useTranscriptionHandler = ({
       if (transcriptionService === 'google') {
         segments = await transcribeWithGoogleCloud(audioBlob, apiKey);
       } else {
-        // OpenAI transcription (existing code)
         const formData = new FormData();
         formData.append('file', audioBlob, 'audio.wav');
         formData.append('model', 'whisper-1');
@@ -60,7 +58,6 @@ export const useTranscriptionHandler = ({
         segments = await processTranscriptionResult(result, audioBlob, apiKey);
       }
 
-      // Processa triggers no último segmento
       if (segments.length > 0) {
         const lastSegment = segments[segments.length - 1];
         const triggers = findTriggers(lastSegment.text);
@@ -96,7 +93,7 @@ export const useTranscriptionHandler = ({
     } finally {
       setIsTranscribing(false);
     }
-  }, [apiKey, transcriptionService, setIsTranscribing, setTranscriptionSegments, toast, minutes, onMinutesUpdate]);
+  }, [apiKey, transcriptionService, setIsTranscribing, setTranscriptionSegments, minutes, onMinutesUpdate]);
 
   return { handleTranscription };
 };
