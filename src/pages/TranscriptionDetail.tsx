@@ -109,9 +109,39 @@ const TranscriptionDetail = () => {
 
   const [currentMinutes, setCurrentMinutes] = useState<MeetingMinutes>(meetingMinutes);
 
+  const [versions, setVersions] = useState<Array<{
+    id: string;
+    date: string;
+    author: string;
+    changes: string;
+    minutes: MeetingMinutes;
+  }>>([]);
+
   const handleSave = (updatedMinutes: MeetingMinutes) => {
+    const newVersion = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleString('pt-BR'),
+      author: updatedMinutes.author || 'Sistema',
+      changes: 'Atualização da ata',
+      minutes: updatedMinutes
+    };
+
+    setVersions(prev => [newVersion, ...prev]);
     setCurrentMinutes(updatedMinutes);
     setIsEditing(false);
+
+    toast({
+      title: "Ata atualizada",
+      description: "As alterações foram salvas com sucesso.",
+    });
+  };
+
+  const handleRestoreVersion = (version: typeof versions[0]) => {
+    setCurrentMinutes(version.minutes);
+    toast({
+      title: "Versão restaurada",
+      description: `A versão de ${version.date} foi restaurada com sucesso.`,
+    });
   };
 
   const exportToTxt = () => {
@@ -167,15 +197,6 @@ const TranscriptionDetail = () => {
     XLSX.writeFile(wb, `ata-reuniao-${date}.xlsx`);
   };
 
-  const [versions] = useState([
-    {
-      id: "1",
-      date: "2024-03-14 10:00",
-      author: "Sistema",
-      changes: "Versão inicial gerada automaticamente",
-    },
-  ]);
-
   const [comments] = useState([
     {
       id: "1",
@@ -228,7 +249,15 @@ const TranscriptionDetail = () => {
             
             <div className="mt-4 sm:mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <MeetingVersionHistory versions={versions} />
+                <MeetingVersionHistory 
+                  versions={versions.map(v => ({
+                    id: v.id,
+                    date: v.date,
+                    author: v.author,
+                    changes: v.changes
+                  }))}
+                  onRestore={handleRestoreVersion}
+                />
                 <MeetingComments
                   comments={comments}
                   onAddComment={handleAddComment}

@@ -28,30 +28,7 @@ export const analyzeTranscription = async (
     console.log("Analisando transcrição:", transcriptionText);
 
     const prompt = `
-      Analise o texto desta transcrição de reunião entre advogado e cliente e extraia as informações em formato JSON.
-      Preste especial atenção a:
-      1. Tarefas e providências a serem tomadas
-      2. Prazos mencionados (processuais ou não)
-      3. Documentos necessários ou a serem preparados
-      4. Decisões e acordos estabelecidos
-      5. Informações confidenciais ou sigilosas
-      6. Bases legais e jurisprudência citadas
-      7. Riscos identificados
-      8. Pontos importantes destacados
-      9. Próximos passos e lembretes
-
-      Identifique especialmente quando alguém mencionar:
-      - "vamos criar uma tarefa", "precisamos fazer", "providenciar", "encaminhar"
-      - "prazo", "vence em", "data limite", "até o dia"
-      - "precisamos do documento", "anexar", "juntar", "documentação necessária"
-      - "ficou decidido que", "acordamos que", "as partes concordaram"
-      - "informação confidencial", "sigilo", "não divulgar"
-      - "base legal", "fundamento jurídico", "lei aplicável", "jurisprudência"
-      - "existe um risco", "ponto de atenção", "possível problema"
-      - "isso é muito importante", "fundamental", "essencial"
-      - "precisamos lembrar", "atentar para", "não podemos esquecer"
-
-      Retorne um objeto JSON com a seguinte estrutura:
+      Analise o texto desta transcrição de reunião entre advogado e cliente e retorne APENAS um objeto JSON válido com a seguinte estrutura, sem texto adicional:
       {
         "meetingTitle": "string",
         "location": "string",
@@ -83,11 +60,11 @@ export const analyzeTranscription = async (
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "Você é um assistente especializado em análise de transcrições de reuniões jurídicas.",
+            content: "Você é um assistente especializado em análise de transcrições de reuniões jurídicas. Responda APENAS com JSON válido, sem texto adicional.",
           },
           {
             role: "user",
