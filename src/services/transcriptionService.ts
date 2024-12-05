@@ -3,6 +3,7 @@ import { voiceIdentificationService } from "./voiceIdentificationService";
 import { handleNameRecognition } from "./nameRecognitionService";
 import { analyzeEmotions } from "./emotionDetectionService";
 import { MeetingMinutes } from "@/types/meeting";
+import { analyzeTranscription } from "./aiAnalysisService";
 
 export const processTranscriptionResult = async (
   result: any, 
@@ -50,24 +51,62 @@ export const processTranscriptionResult = async (
   return processedSegments;
 };
 
-export const updateMinutesFromTranscription = (
+export const updateMinutesFromTranscription = async (
   minutes: MeetingMinutes,
   segments: TranscriptionSegment[]
-): MeetingMinutes => {
+): Promise<MeetingMinutes> => {
   console.log('Atualizando ata com segmentos:', segments);
 
-  // Identificar participantes únicos
-  const uniqueSpeakers = new Set(segments.map(s => s.speaker));
-  const participants = Array.from(uniqueSpeakers).map(name => ({
-    name,
-    role: ''
-  }));
+  try {
+    // Concatenar todo o texto dos segmentos
+    const fullTranscription = segments.map(s => s.text).join(' ');
+    
+    // Identificar participantes únicos
+    const uniqueSpeakers = new Set(segments.map(s => s.speaker));
+    const participants = Array.from(uniqueSpeakers).map(name => ({
+      name,
+      role: ''
+    }));
 
-  // Extrair discussões e decisões
-  const discussions = segments.map(s => s.text).join(' ');
-  
-  // Atualizar a ata
-  const updatedMinutes: MeetingMinutes = {
+    // Analisar a transcrição completa com a IA
+    const aiAnalysis = await analyzeTranscription(fullTranscription, minutes.apiKey || '');
+
+    if (aiAnalysis) {
+      // Mesclar a análise da IA com os dados existentes
+      const updatedMinutes: MeetingMinutes = {
+        ...minutes,
+        meetingTitle: aiAnalysis.meetingTitle || minutes.meetingTitle,
+        participants: [...participants, ...aiAnalysis.participants.filter(p => 
+          !participants.some(existing => existing.name === p.name)
+        )],
+        agendaItems: [
+          ...minutes.agendaItems,
+          ...aiAnalysis.agendaItems.filter(item => 
+            !minutes.agendaItems.some(existing => existing.title === item.title)
+          )
+        ],
+        actionItems: [
+          ...minutes.actionItems,
+          ...aiAnalysis.actionItems.filter(item =>
+            !minutes.actionItems.some(existing => existing.task === item.task)
+          )
+        ],
+        summary: aiAnalysis.summary || minutes.summary,
+        nextSteps: [
+          ...new Set([...minutes.nextSteps, ...aiAnalysis.nextSteps])
+        ],
+        lastModified: new Date().toISOString()
+      };
+
+      console.log('Ata atualizada com análise da IA:', updatedMinutes);
+      return updatedMinutes;
+    }
+  } catch (error) {
+    console.error('Erro ao processar análise da IA:', error);
+  }
+
+  // Se houver falha na análise da IA, retorna a atualização básica
+  const basicUpdate: MeetingMinutes = {
     ...minutes,
     participants: [...minutes.participants, ...participants.filter(p => 
       !minutes.participants.some(existing => existing.name === p.name)
@@ -76,13 +115,14 @@ export const updateMinutesFromTranscription = (
       ...minutes.agendaItems,
       {
         title: 'Discussão',
-        discussion: discussions,
+        discussion: segments.map(s => s.text).join(' '),
         responsible: '',
         decision: ''
       }
-    ]
+    ],
+    lastModified: new Date().toISOString()
   };
 
-  console.log('Ata atualizada:', updatedMinutes);
-  return updatedMinutes;
+  console.log('Ata atualizada (versão básica):', basicUpdate);
+  return basicUpdate;
 };

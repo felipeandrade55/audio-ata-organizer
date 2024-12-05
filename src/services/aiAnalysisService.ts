@@ -24,6 +24,11 @@ export const analyzeTranscription = async (
   transcriptionText: string,
   apiKey: string
 ): Promise<MeetingMinutes | null> => {
+  if (!apiKey) {
+    console.error("Chave da API não fornecida");
+    return null;
+  }
+
   try {
     console.log("Analisando transcrição:", transcriptionText);
 
@@ -104,14 +109,14 @@ export const analyzeTranscription = async (
       summary: analysis.summary,
       nextSteps: analysis.nextSteps,
       author: "Sistema de Transcrição com IA",
-      approver: "",
       meetingType: "initial",
       confidentialityLevel: "internal",
       legalReferences: [],
       version: 1,
       status: "draft",
       lastModified: new Date().toISOString(),
-      tags: []
+      tags: [],
+      apiKey: apiKey
     };
   } catch (error) {
     console.error("Erro na análise da transcrição:", error);
