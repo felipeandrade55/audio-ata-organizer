@@ -75,6 +75,48 @@ const RecordingContainer = () => {
 
     fetchApiKey();
   }, [transcriptionService, toast]);
+
+  const checkTranscriptionLimit = async () => {
+    try {
+      const { data, error } = await supabase.rpc('check_transcription_limit');
+      
+      if (error) throw error;
+      
+      if (data && data[0].total_count >= 10) {
+        const shouldProceed = window.confirm(
+          "Você atingiu o limite de 10 transcrições na versão BETA. A transcrição mais antiga será removida para continuar. Deseja prosseguir?"
+        );
+        
+        if (!shouldProceed) {
+          return false;
+        }
+
+        // Delete the oldest transcription
+        if (data[0].oldest_id) {
+          const { error: deleteError } = await supabase
+            .from('meeting_minutes')
+            .delete()
+            .eq('id', data[0].oldest_id);
+
+          if (deleteError) throw deleteError;
+
+          toast({
+            title: "Transcrição antiga removida",
+            description: "A transcrição mais antiga foi removida para liberar espaço.",
+          });
+        }
+      }
+      return true;
+    } catch (error) {
+      console.error('Erro ao verificar limite de transcrições:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível verificar o limite de transcrições.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
   
   const {
     isRecording,
@@ -90,7 +132,8 @@ const RecordingContainer = () => {
     apiKey,
     transcriptionService,
     minutes,
-    onMinutesUpdate: setMinutes
+    onMinutesUpdate: setMinutes,
+    beforeTranscriptionStart: checkTranscriptionLimit
   });
 
   const formatDate = (date: Date) => {
@@ -122,7 +165,7 @@ const RecordingContainer = () => {
     });
   };
 
-  const handleStartRecording = () => {
+  const handleStartRecording = async () => {
     if (!apiKey) {
       toast({
         title: "Erro de Configuração",

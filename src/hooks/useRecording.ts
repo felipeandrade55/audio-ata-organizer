@@ -10,9 +10,16 @@ interface UseRecordingProps {
   transcriptionService: 'openai' | 'google';
   minutes?: MeetingMinutes;
   onMinutesUpdate?: (minutes: MeetingMinutes) => void;
+  beforeTranscriptionStart?: () => Promise<boolean>;
 }
 
-export const useRecording = ({ apiKey, transcriptionService, minutes, onMinutesUpdate }: UseRecordingProps) => {
+export const useRecording = ({ 
+  apiKey, 
+  transcriptionService, 
+  minutes, 
+  onMinutesUpdate,
+  beforeTranscriptionStart 
+}: UseRecordingProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -67,6 +74,16 @@ export const useRecording = ({ apiKey, transcriptionService, minutes, onMinutesU
     setRecordingStartTime(null);
     
     const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+    
+    // Check transcription limit before proceeding
+    if (beforeTranscriptionStart) {
+      const canProceed = await beforeTranscriptionStart();
+      if (!canProceed) {
+        setAudioChunks([]);
+        return;
+      }
+    }
+    
     await handleTranscription(audioBlob);
     setAudioChunks([]);
   };
