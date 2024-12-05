@@ -32,9 +32,9 @@ export const useTranscriptionHandler = ({
     setIsTranscribing(true);
 
     try {
-      if (!apiKey || apiKey.trim() === '') {
-        console.error(`Chave da API ${transcriptionService} não fornecida ou vazia`);
-        throw new Error(`Chave da API ${transcriptionService} não fornecida`);
+      if (!apiKey || apiKey.trim() === '' || apiKey === 'YOUR_OPENAI_API_KEY' || apiKey.includes('*')) {
+        console.error(`Chave da API ${transcriptionService} inválida:`, apiKey);
+        throw new Error(`Chave da API ${transcriptionService} inválida ou não configurada. Por favor, configure uma chave válida no Supabase.`);
       }
 
       const cleanApiKey = apiKey.trim();
