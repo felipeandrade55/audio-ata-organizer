@@ -101,28 +101,29 @@ export const updateMinutesFromTranscription = async (
       console.log('Ata atualizada com análise da IA:', updatedMinutes);
       return updatedMinutes;
     }
+
+    // Se houver falha na análise da IA, retorna a atualização básica
+    const basicUpdate: MeetingMinutes = {
+      ...minutes,
+      participants: [...minutes.participants, ...uniqueParticipants.filter(p => 
+        !minutes.participants.some(existing => existing.name === p.name)
+      )],
+      agendaItems: [
+        ...minutes.agendaItems,
+        {
+          title: 'Discussão',
+          discussion: segments.map(s => s.text).join(' '),
+          responsible: '',
+          decision: ''
+        }
+      ],
+      lastModified: new Date().toISOString()
+    };
+
+    console.log('Ata atualizada (versão básica):', basicUpdate);
+    return basicUpdate;
   } catch (error) {
     console.error('Erro ao processar análise da IA:', error);
+    throw error;
   }
-
-  // Se houver falha na análise da IA, retorna a atualização básica
-  const basicUpdate: MeetingMinutes = {
-    ...minutes,
-    participants: [...minutes.participants, ...uniqueParticipants.filter(p => 
-      !minutes.participants.some(existing => existing.name === p.name)
-    )],
-    agendaItems: [
-      ...minutes.agendaItems,
-      {
-        title: 'Discussão',
-        discussion: segments.map(s => s.text).join(' '),
-        responsible: '',
-        decision: ''
-      }
-    ],
-    lastModified: new Date().toISOString()
-  };
-
-  console.log('Ata atualizada (versão básica):', basicUpdate);
-  return basicUpdate;
 };
