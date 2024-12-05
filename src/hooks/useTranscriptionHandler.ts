@@ -59,14 +59,15 @@ export const useTranscriptionHandler = ({
           body: formData,
         });
 
+        const responseData = await response.json();
+
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Erro na resposta da API:', errorData);
+          console.error('Erro na resposta da API:', responseData);
           
           let errorMessage = 'Falha na transcrição';
-          if (errorData.error?.message) {
-            errorMessage = `Erro: ${errorData.error.message}`;
-            if (errorData.error.code === 'invalid_api_key') {
+          if (responseData.error?.message) {
+            errorMessage = `Erro: ${responseData.error.message}`;
+            if (responseData.error.code === 'invalid_api_key') {
               errorMessage = 'Chave API inválida. Por favor, verifique a configuração no Supabase.';
             }
           }
@@ -74,9 +75,8 @@ export const useTranscriptionHandler = ({
           throw new Error(errorMessage);
         }
 
-        const result = await response.json();
-        console.log('Resultado da transcrição:', result);
-        segments = await processTranscriptionResult(result, audioBlob, cleanApiKey);
+        console.log('Resultado da transcrição:', responseData);
+        segments = await processTranscriptionResult(responseData, audioBlob, cleanApiKey);
       }
 
       if (segments.length > 0) {
