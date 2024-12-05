@@ -349,7 +349,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_transcription_limit: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: {
+          total_count: number
+          oldest_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
