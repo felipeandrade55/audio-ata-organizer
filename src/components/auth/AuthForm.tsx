@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from '@/lib/supabase';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Label } from "@/components/ui/label";
-import { User } from 'lucide-react';
+import { motion } from "framer-motion";
+import { AuthHeader } from './AuthHeader';
+import { AvatarUpload } from './AvatarUpload';
+import { RegisterFields } from './RegisterFields';
 
 const AuthForm = () => {
   const [email, setEmail] = useState('');
@@ -67,6 +68,7 @@ const AuthForm = () => {
         toast({
           title: "Login realizado com sucesso!",
           description: "Bem-vindo de volta!",
+          className: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900",
         });
       } else {
         const { data: { user }, error } = await supabase.auth.signUp({
@@ -100,6 +102,7 @@ const AuthForm = () => {
         toast({
           title: "Cadastro realizado!",
           description: "Verifique seu email para confirmar o cadastro.",
+          className: "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-900",
         });
       }
     } catch (error: any) {
@@ -114,95 +117,85 @@ const AuthForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>{isLogin ? 'Login' : 'Cadastro'}</CardTitle>
-        <CardDescription>
-          {isLogin
-            ? 'Entre com sua conta para continuar'
-            : 'Crie uma nova conta para começar'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-md mx-auto"
+    >
+      <Card className="backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 shadow-xl border-purple-100 dark:border-purple-900/20">
+        <AuthHeader isLogin={isLogin} />
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <>
+                <AvatarUpload
+                  avatarUrl={avatarUrl}
+                  onAvatarChange={handleAvatarChange}
+                />
+                <RegisterFields
+                  name={name}
+                  setName={setName}
+                  oab={oab}
+                  setOab={setOab}
+                />
+              </>
+            )}
+            <motion.div 
+              className="space-y-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
+            >
               <div className="space-y-2">
-                <Label htmlFor="avatar">Foto de Perfil</Label>
-                <div className="flex items-center space-x-4">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={avatarUrl} />
-                    <AvatarFallback>
-                      <User className="w-8 h-8" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <Input
-                    id="avatar"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="max-w-[220px]"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome Completo</Label>
                 <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  type="email"
+                  placeholder="Seu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="transition-all duration-200 focus:ring-2 focus:ring-purple-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="oab">Número da OAB</Label>
                 <Input
-                  id="oab"
-                  type="text"
-                  value={oab}
-                  onChange={(e) => setOab(e.target.value)}
+                  type="password"
+                  placeholder="Sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="transition-all duration-200 focus:ring-2 focus:ring-purple-500"
                 />
               </div>
-            </>
-          )}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Carregando...' : isLogin ? 'Entrar' : 'Cadastrar'}
-          </Button>
-          <Button
-            type="button"
-            variant="link"
-            className="w-full"
-            onClick={() => setIsLogin(!isLogin)}
-          >
-            {isLogin
-              ? 'Não tem uma conta? Cadastre-se'
-              : 'Já tem uma conta? Faça login'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.6 }}
+              className="space-y-4 pt-2"
+            >
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Carregando...' : isLogin ? 'Entrar' : 'Cadastrar'}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                onClick={() => setIsLogin(!isLogin)}
+              >
+                {isLogin
+                  ? 'Não tem uma conta? Cadastre-se'
+                  : 'Já tem uma conta? Faça login'}
+              </Button>
+            </motion.div>
+          </form>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 
