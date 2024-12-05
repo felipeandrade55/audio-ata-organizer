@@ -45,27 +45,12 @@ export interface MeetingMinutes {
   nextSteps: string[];
   author: string;
   approver?: string;
-  // Novos campos
-  caseNumber?: string;  // Número do processo
-  clientInfo?: {
-    name: string;
-    document: string;
-    email?: string;
-    phone?: string;
-  };
   meetingType: 'initial' | 'followup' | 'settlement' | 'preparation' | 'other';
   confidentialityLevel: 'public' | 'internal' | 'confidential' | 'restricted';
   legalReferences: LegalReference[];
-  relatedMeetings?: string[];  // IDs de reuniões relacionadas
-  attachments?: {
-    name: string;
-    url: string;
-    type: string;
-  }[];
   version: number;
   status: 'draft' | 'pending_approval' | 'approved' | 'archived';
   lastModified: string;
   tags: string[];
-  billableTime?: number;  // Tempo faturável em minutos
-  followupDate?: string;  // Data de acompanhamento
+  apiKey?: string;  // Added apiKey as optional property
 }

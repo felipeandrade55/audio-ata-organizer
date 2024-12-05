@@ -63,7 +63,7 @@ export const updateMinutesFromTranscription = async (
     
     // Identificar participantes únicos
     const uniqueSpeakers = new Set(segments.map(s => s.speaker));
-    const participants = Array.from(uniqueSpeakers).map(name => ({
+    const uniqueParticipants = Array.from(uniqueSpeakers).map(name => ({
       name,
       role: ''
     }));
@@ -76,8 +76,8 @@ export const updateMinutesFromTranscription = async (
       const updatedMinutes: MeetingMinutes = {
         ...minutes,
         meetingTitle: aiAnalysis.meetingTitle || minutes.meetingTitle,
-        participants: [...participants, ...aiAnalysis.participants.filter(p => 
-          !participants.some(existing => existing.name === p.name)
+        participants: [...uniqueParticipants, ...aiAnalysis.participants.filter(p => 
+          !uniqueParticipants.some(existing => existing.name === p.name)
         )],
         agendaItems: [
           ...minutes.agendaItems,
@@ -108,7 +108,7 @@ export const updateMinutesFromTranscription = async (
   // Se houver falha na análise da IA, retorna a atualização básica
   const basicUpdate: MeetingMinutes = {
     ...minutes,
-    participants: [...minutes.participants, ...participants.filter(p => 
+    participants: [...minutes.participants, ...uniqueParticipants.filter(p => 
       !minutes.participants.some(existing => existing.name === p.name)
     )],
     agendaItems: [

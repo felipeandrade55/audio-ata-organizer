@@ -66,7 +66,7 @@ export const useTranscriptionHandler = ({
         
         // Atualizar a ata com os segmentos processados
         if (minutes && onMinutesUpdate) {
-          const updatedMinutes = updateMinutesFromTranscription(minutes, segments);
+          const updatedMinutes = await updateMinutesFromTranscription(minutes, segments);
           const minutesWithTriggers = updateMinutesWithTriggers(updatedMinutes, 
             segments.flatMap(s => findTriggers(s.text))
           );
