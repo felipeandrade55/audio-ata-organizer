@@ -29,17 +29,19 @@ export const useTranscriptionHandler = ({
   
   const handleTranscription = useCallback(async (audioBlob: Blob) => {
     console.log('Iniciando transcrição do áudio');
+    console.log('Serviço de transcrição:', transcriptionService);
+    console.log('Comprimento da chave API:', apiKey?.length || 0);
+    
     setIsTranscribing(true);
 
     try {
       if (!apiKey || apiKey.trim() === '' || apiKey === 'YOUR_OPENAI_API_KEY' || apiKey.includes('*')) {
         console.error(`Chave da API ${transcriptionService} inválida:`, apiKey);
-        throw new Error(`Chave da API ${transcriptionService} inválida ou não configurada. Por favor, configure uma chave válida no Supabase.`);
+        throw new Error(`Chave da API ${transcriptionService} não encontrada ou inválida. Por favor, configure uma chave válida no Supabase.`);
       }
 
       const cleanApiKey = apiKey.trim();
       console.log(`Usando chave ${transcriptionService} com comprimento:`, cleanApiKey.length);
-      console.log('Primeiros caracteres da chave:', cleanApiKey.substring(0, 5));
 
       let segments: TranscriptionSegment[];
 
@@ -61,37 +63,19 @@ export const useTranscriptionHandler = ({
           body: formData,
         });
 
-        const responseText = await response.text();
-        console.log('Resposta bruta da API:', responseText);
-
-        let responseData;
-        try {
-          responseData = JSON.parse(responseText);
-        } catch (e) {
-          console.error('Erro ao parsear resposta:', e);
-          throw new Error('Erro ao processar resposta da API');
-        }
-
         if (!response.ok) {
-          console.error('Erro na resposta da API:', responseData);
-          
-          let errorMessage = 'Falha na transcrição';
-          if (responseData.error?.message) {
-            errorMessage = `Erro: ${responseData.error.message}`;
-            if (responseData.error.code === 'invalid_api_key') {
-              errorMessage = 'Chave API inválida. Por favor, verifique a configuração no Supabase.';
-            }
-          }
-          
-          throw new Error(errorMessage);
+          const errorText = await response.text();
+          console.error('Erro na resposta da OpenAI:', errorText);
+          throw new Error(`Erro na API OpenAI: ${response.status} - ${errorText}`);
         }
 
-        console.log('Resultado da transcrição:', responseData);
+        const responseData = await response.json();
+        console.log('Resposta da OpenAI:', responseData);
         segments = await processTranscriptionResult(responseData, audioBlob, cleanApiKey);
       }
 
       if (segments.length > 0) {
-        console.log('Processando segmentos da transcrição');
+        console.log('Processando segmentos da transcrição:', segments);
         
         if (minutes && onMinutesUpdate) {
           const updatedMinutes = await updateMinutesFromTranscription(minutes, segments);
@@ -101,11 +85,6 @@ export const useTranscriptionHandler = ({
           
           onMinutesUpdate(minutesWithTriggers);
           console.log('Ata atualizada com sucesso');
-          
-          toast({
-            title: "Ata atualizada",
-            description: "A ata foi atualizada com o conteúdo da transcrição.",
-          });
         }
       }
       
@@ -117,9 +96,18 @@ export const useTranscriptionHandler = ({
       });
     } catch (error) {
       console.error('Erro na transcrição:', error);
+      
+      let errorMessage = "Não foi possível transcrever o áudio.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        if (errorMessage.includes('API key')) {
+          errorMessage = `Por favor, configure uma chave válida da API ${transcriptionService} no Supabase antes de tentar transcrever.`;
+        }
+      }
+      
       toast({
         title: "Erro na transcrição",
-        description: error instanceof Error ? error.message : "Não foi possível transcrever o áudio.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
