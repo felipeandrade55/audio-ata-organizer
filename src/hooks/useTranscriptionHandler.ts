@@ -30,14 +30,17 @@ export const useTranscriptionHandler = ({
   const handleTranscription = useCallback(async (audioBlob: Blob) => {
     console.log('Iniciando transcrição do áudio');
     console.log('Serviço de transcrição:', transcriptionService);
-    console.log('Comprimento da chave API:', apiKey?.length || 0);
     
     setIsTranscribing(true);
 
     try {
-      if (!apiKey || apiKey.trim() === '' || apiKey === 'YOUR_OPENAI_API_KEY' || apiKey.includes('*')) {
-        console.error(`Chave da API ${transcriptionService} inválida:`, apiKey);
-        throw new Error(`Chave da API ${transcriptionService} não encontrada ou inválida. Por favor, configure uma chave válida no Supabase.`);
+      // Validação mais rigorosa da chave da API
+      if (!apiKey || 
+          apiKey.trim() === '' || 
+          apiKey === 'your_openai_api_key_here' || 
+          apiKey === 'your_google_api_key_here' || 
+          apiKey.includes('*')) {
+        throw new Error(`Por favor, configure uma chave válida da API ${transcriptionService.toUpperCase()} no arquivo .env antes de tentar transcrever.`);
       }
 
       const cleanApiKey = apiKey.trim();
@@ -64,9 +67,14 @@ export const useTranscriptionHandler = ({
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Erro na resposta da OpenAI:', errorText);
-          throw new Error(`Erro na API OpenAI: ${response.status} - ${errorText}`);
+          const errorData = await response.json();
+          console.error('Erro na resposta da OpenAI:', errorData);
+          
+          if (response.status === 401) {
+            throw new Error('Chave da API OpenAI inválida. Por favor, verifique se você configurou uma chave válida no arquivo .env');
+          }
+          
+          throw new Error(`Erro na API OpenAI: ${response.status} - ${errorData.error?.message || 'Erro desconhecido'}`);
         }
 
         const responseData = await response.json();
@@ -100,9 +108,6 @@ export const useTranscriptionHandler = ({
       let errorMessage = "Não foi possível transcrever o áudio.";
       if (error instanceof Error) {
         errorMessage = error.message;
-        if (errorMessage.includes('API key')) {
-          errorMessage = `Por favor, configure uma chave válida da API ${transcriptionService} no Supabase antes de tentar transcrever.`;
-        }
       }
       
       toast({
