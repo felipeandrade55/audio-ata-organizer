@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import TranscriptionHeader from "./TranscriptionHeader";
+import { TranscriptionHeader } from "./TranscriptionHeader";
 import { TranscriptionActions } from "./TranscriptionActions";
 import { TranscriptionMetadata } from "./TranscriptionMetadata";
 import TranscriptionTable from "./TranscriptionTable";
