@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { useRecordingState } from "./useRecordingState";
+import { useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { useTranscriptionHandler } from "./useTranscriptionHandler";
 import { useAudioRecording } from "./useAudioRecording";
 import { MeetingMinutes } from "@/types/meeting";
+import { TranscriptionSegment } from "@/types/transcription";
 
 interface UseRecordingProps {
   apiKey: string;
@@ -13,20 +13,13 @@ interface UseRecordingProps {
 }
 
 export const useRecording = ({ apiKey, transcriptionService, minutes, onMinutesUpdate }: UseRecordingProps) => {
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([]);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
-  
-  const {
-    isRecording,
-    setIsRecording,
-    isPaused,
-    setIsPaused,
-    isTranscribing,
-    setIsTranscribing,
-    transcriptionSegments,
-    setTranscriptionSegments,
-    recordingStartTime,
-    setRecordingStartTime,
-  } = useRecordingState();
+  const { toast } = useToast();
 
   const { handleTranscription } = useTranscriptionHandler({
     apiKey,
@@ -38,9 +31,9 @@ export const useRecording = ({ apiKey, transcriptionService, minutes, onMinutesU
     onMinutesUpdate,
   });
 
-  const handleDataAvailable = (data: BlobPart) => {
+  const handleDataAvailable = useCallback((data: BlobPart) => {
     setAudioChunks(prev => [...prev, data]);
-  };
+  }, []);
 
   const {
     startRecording: startAudioRecording,
@@ -60,6 +53,10 @@ export const useRecording = ({ apiKey, transcriptionService, minutes, onMinutesU
       setIsRecording(true);
       setIsPaused(false);
       setAudioChunks([]);
+      toast({
+        title: "Gravação iniciada",
+        description: "O áudio está sendo pré-processado para melhor qualidade.",
+      });
     }
   };
 
