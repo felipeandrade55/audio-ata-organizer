@@ -32,6 +32,7 @@ export interface LegalReference {
 }
 
 export interface MeetingMinutes {
+  id: string;  // Added this property
   date: string;
   startTime: string;
   endTime: string;
@@ -52,5 +53,5 @@ export interface MeetingMinutes {
   status: 'draft' | 'pending_approval' | 'approved' | 'archived';
   lastModified: string;
   tags: string[];
-  apiKey?: string;  // Added apiKey as optional property
+  apiKey?: string;
 }
