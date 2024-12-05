@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { toast } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/use-toast";
 import { processTranscriptionResult } from "@/services/transcriptionService";
 import { transcribeWithGoogleCloud } from "@/services/googleTranscriptionService";
 import { TranscriptionSegment } from "@/types/transcription";
@@ -25,6 +25,7 @@ export const useTranscriptionHandler = ({
   minutes,
   onMinutesUpdate,
 }: TranscriptionHandlerProps) => {
+  const { toast } = useToast();
   
   const handleTranscription = useCallback(async (audioBlob: Blob) => {
     setIsTranscribing(true);
@@ -93,7 +94,7 @@ export const useTranscriptionHandler = ({
     } finally {
       setIsTranscribing(false);
     }
-  }, [apiKey, transcriptionService, setIsTranscribing, setTranscriptionSegments, minutes, onMinutesUpdate]);
+  }, [apiKey, transcriptionService, setIsTranscribing, setTranscriptionSegments, toast, minutes, onMinutesUpdate]);
 
   return { handleTranscription };
 };
