@@ -96,11 +96,22 @@ export const analyzeTranscription = async (
       organizer: analysis.organizer,
       participants: analysis.participants,
       agendaItems: analysis.agendaItems,
-      actionItems: analysis.actionItems,
+      actionItems: analysis.actionItems.map(item => ({
+        ...item,
+        priority: "medium",
+        status: "pending"
+      })),
       summary: analysis.summary,
       nextSteps: analysis.nextSteps,
       author: "Sistema de Transcrição com IA",
       approver: "",
+      meetingType: "initial",
+      confidentialityLevel: "internal",
+      legalReferences: [],
+      version: 1,
+      status: "draft",
+      lastModified: new Date().toISOString(),
+      tags: []
     };
   } catch (error) {
     console.error("Erro na análise da transcrição:", error);

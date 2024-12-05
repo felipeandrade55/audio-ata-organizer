@@ -83,6 +83,8 @@ export const updateMinutesWithKeywords = (
             task: match.value,
             responsible: match.metadata.responsible,
             deadline: '',
+            priority: 'medium',
+            status: 'pending'
           });
         }
         break;

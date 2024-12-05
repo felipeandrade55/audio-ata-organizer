@@ -26,6 +26,13 @@ const RecordingContainer = () => {
     summary: '',
     nextSteps: [],
     author: 'Sistema de Transcrição',
+    meetingType: 'initial',
+    confidentialityLevel: 'internal',
+    legalReferences: [],
+    version: 1,
+    status: 'draft',
+    lastModified: new Date().toISOString(),
+    tags: []
   });
   
   const {

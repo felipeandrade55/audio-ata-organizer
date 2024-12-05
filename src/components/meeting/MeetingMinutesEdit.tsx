@@ -76,7 +76,13 @@ const MeetingMinutesEdit = ({ minutes, onSave, onCancel }: MeetingMinutesEditPro
   };
 
   const addActionItem = () => {
-    setActionItems([...actionItems, { task: "", responsible: "", deadline: "" }]);
+    setActionItems([...actionItems, {
+      task: "",
+      responsible: "",
+      deadline: "",
+      priority: "medium",
+      status: "pending"
+    }]);
   };
 
   const removeActionItem = (index: number) => {

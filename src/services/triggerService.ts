@@ -140,6 +140,8 @@ export const updateMinutesWithTriggers = (
           task: match.text,
           responsible: '',
           deadline: match.type === 'deadline' ? match.text : '',
+          priority: 'medium',
+          status: 'pending'
         };
         updatedMinutes.actionItems.push(newTask);
         break;
