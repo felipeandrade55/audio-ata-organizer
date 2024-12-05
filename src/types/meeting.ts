@@ -1,6 +1,9 @@
 export interface MeetingParticipant {
   name: string;
   role?: string;
+  oab?: string;  // Número da OAB para advogados
+  email?: string;
+  phone?: string;
 }
 
 export interface AgendaItem {
@@ -8,12 +11,24 @@ export interface AgendaItem {
   discussion?: string;
   responsible?: string;
   decision?: string;
+  legalReferences?: string[];  // Referências a leis, jurisprudências, etc.
+  confidential?: boolean;  // Marcador para informações sigilosas
+  attachments?: string[];  // Documentos anexados
 }
 
 export interface ActionItem {
   task: string;
   responsible: string;
   deadline: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'in_progress' | 'completed';
+  legalDeadline?: boolean;  // Indica se é um prazo legal/processual
+}
+
+export interface LegalReference {
+  type: 'lei' | 'jurisprudencia' | 'doutrina' | 'sumula';
+  reference: string;
+  description: string;
 }
 
 export interface MeetingMinutes {
@@ -30,4 +45,27 @@ export interface MeetingMinutes {
   nextSteps: string[];
   author: string;
   approver?: string;
+  // Novos campos
+  caseNumber?: string;  // Número do processo
+  clientInfo?: {
+    name: string;
+    document: string;
+    email?: string;
+    phone?: string;
+  };
+  meetingType: 'initial' | 'followup' | 'settlement' | 'preparation' | 'other';
+  confidentialityLevel: 'public' | 'internal' | 'confidential' | 'restricted';
+  legalReferences: LegalReference[];
+  relatedMeetings?: string[];  // IDs de reuniões relacionadas
+  attachments?: {
+    name: string;
+    url: string;
+    type: string;
+  }[];
+  version: number;
+  status: 'draft' | 'pending_approval' | 'approved' | 'archived';
+  lastModified: string;
+  tags: string[];
+  billableTime?: number;  // Tempo faturável em minutos
+  followupDate?: string;  // Data de acompanhamento
 }
