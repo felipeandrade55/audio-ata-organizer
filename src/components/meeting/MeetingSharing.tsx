@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Mail, QrCode, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react"; // Changed this line to use named import
 
 interface MeetingSharingProps {
   meetingId: string;
@@ -69,7 +69,7 @@ const MeetingSharing = ({
 
         <div className="border rounded-lg p-4 flex flex-col items-center gap-2">
           <QrCode className="h-4 w-4" />
-          <QRCode value={shareUrl} size={128} />
+          <QRCodeSVG value={shareUrl} size={128} />
           <p className="text-sm text-muted-foreground text-center">
             Escaneie para acessar a ATA
           </p>
