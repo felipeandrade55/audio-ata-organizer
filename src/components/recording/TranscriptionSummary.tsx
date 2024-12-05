@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Clock, Users, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 interface TranscriptionSummaryProps {
   duration: string;
@@ -16,6 +17,14 @@ const TranscriptionSummary = ({
   onViewFullTranscription,
   isTranscribing,
 }: TranscriptionSummaryProps) => {
+  const navigate = useNavigate();
+
+  const handleViewTranscription = () => {
+    if (!isTranscribing) {
+      onViewFullTranscription();
+    }
+  };
+
   return (
     <Card className="w-full mt-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-gray-200 dark:border-gray-700">
       <CardContent className="pt-6">
@@ -42,7 +51,7 @@ const TranscriptionSummary = ({
             </div>
           </div>
           <Button 
-            onClick={onViewFullTranscription}
+            onClick={handleViewTranscription}
             disabled={isTranscribing}
             className={`w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 ${
               isTranscribing ? 'opacity-50 cursor-not-allowed' : ''
