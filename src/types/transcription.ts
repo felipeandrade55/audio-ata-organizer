@@ -7,8 +7,9 @@ export interface Segment {
     confidence: number;
   };
   triggers?: {
-    type: 'task' | 'reminder' | 'decision' | 'risk' | 'highlight';
+    type: 'task' | 'reminder' | 'decision' | 'risk' | 'highlight' | 'deadline' | 'document' | 'legal' | 'confidential' | 'agreement';
     text: string;
+    context?: string;
   }[];
 }
 
