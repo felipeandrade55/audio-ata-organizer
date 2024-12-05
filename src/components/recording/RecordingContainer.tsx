@@ -53,17 +53,21 @@ const RecordingContainer = () => {
           throw error;
         }
 
-        if (data) {
-          console.log('API key fetched successfully');
-          setApiKey(data.api_key);
+        if (!data?.api_key) {
+          console.error('No API key found for service:', transcriptionService);
+          throw new Error(`No API key found for ${transcriptionService}`);
         }
+
+        console.log(`${transcriptionService} API key found with length:`, data.api_key.length);
+        setApiKey(data.api_key);
       } catch (error) {
         console.error('Error fetching API key:', error);
         toast({
-          title: "Erro",
-          description: "Não foi possível carregar a chave da API. Por favor, contate o suporte.",
+          title: "Erro na Configuração",
+          description: `Chave da API ${transcriptionService} não encontrada ou inválida. Por favor, verifique a configuração.`,
           variant: "destructive",
         });
+        setApiKey('');
       }
     };
 
@@ -116,7 +120,17 @@ const RecordingContainer = () => {
     });
   };
 
-  const handleStartRecording = () => startRecording(identificationEnabled);
+  const handleStartRecording = () => {
+    if (!apiKey) {
+      toast({
+        title: "Erro de Configuração",
+        description: `Por favor, configure a chave da API ${transcriptionService} antes de iniciar a gravação.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    startRecording(identificationEnabled);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
