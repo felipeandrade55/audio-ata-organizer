@@ -5,7 +5,7 @@ export const transcribeWithGoogleCloud = async (
   apiKey: string
 ): Promise<TranscriptionSegment[]> => {
   try {
-    // Converter o blob para base64
+    // Convert blob to base64
     const audioBytes = await new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -15,12 +15,13 @@ export const transcribeWithGoogleCloud = async (
       reader.readAsDataURL(audioBlob);
     });
 
-    // Configurar a requisição para o Google Cloud Speech-to-Text
+    // Configure request for Google Cloud Speech-to-Text
     const response = await fetch('https://speech.googleapis.com/v1/speech:recognize', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${apiKey}`, // Using the API key as Bearer token
         'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey, // Also include as API key header
       },
       body: JSON.stringify({
         config: {
@@ -38,12 +39,14 @@ export const transcribeWithGoogleCloud = async (
     });
 
     if (!response.ok) {
-      throw new Error('Falha na transcrição com Google Cloud');
+      const errorData = await response.json();
+      console.error('Google Cloud API Error:', errorData);
+      throw new Error(errorData.error?.message || 'Falha na transcrição com Google Cloud');
     }
 
     const result = await response.json();
     
-    // Processar o resultado e converter para o formato do nosso sistema
+    // Process the result and convert to our system's format
     const segments: TranscriptionSegment[] = [];
     let currentSegment: TranscriptionSegment = {
       timestamp: '00:00',
@@ -51,31 +54,33 @@ export const transcribeWithGoogleCloud = async (
       text: '',
     };
 
-    result.results.forEach((result: any) => {
-      const alternatives = result.alternatives[0];
-      if (alternatives && alternatives.words) {
-        alternatives.words.forEach((word: any) => {
-          const startTime = parseFloat(word.startTime.seconds || 0);
-          const minutes = Math.floor(startTime / 60);
-          const seconds = Math.floor(startTime % 60);
-          const timestamp = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    if (result.results && result.results.length > 0) {
+      result.results.forEach((result: any) => {
+        const alternatives = result.alternatives[0];
+        if (alternatives && alternatives.words) {
+          alternatives.words.forEach((word: any) => {
+            const startTime = parseFloat(word.startTime.seconds || 0);
+            const minutes = Math.floor(startTime / 60);
+            const seconds = Math.floor(startTime % 60);
+            const timestamp = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-          if (timestamp !== currentSegment.timestamp && currentSegment.text) {
-            segments.push({ ...currentSegment });
-            currentSegment = {
-              timestamp,
-              speaker: 'Speaker 1',
-              text: word.word,
-            };
-          } else {
-            currentSegment.text += ' ' + word.word;
-          }
-        });
+            if (timestamp !== currentSegment.timestamp && currentSegment.text) {
+              segments.push({ ...currentSegment });
+              currentSegment = {
+                timestamp,
+                speaker: 'Speaker 1',
+                text: word.word,
+              };
+            } else {
+              currentSegment.text += ' ' + word.word;
+            }
+          });
+        }
+      });
+
+      if (currentSegment.text) {
+        segments.push(currentSegment);
       }
-    });
-
-    if (currentSegment.text) {
-      segments.push(currentSegment);
     }
 
     return segments;
