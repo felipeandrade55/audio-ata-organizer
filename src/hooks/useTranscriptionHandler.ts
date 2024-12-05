@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { processTranscriptionResult } from "@/services/transcriptionService";
+import { processTranscriptionResult, updateMinutesFromTranscription } from "@/services/transcriptionService";
 import { transcribeWithGoogleCloud } from "@/services/googleTranscriptionService";
 import { TranscriptionSegment } from "@/types/transcription";
 import { findTriggers, updateMinutesWithTriggers } from "@/services/triggerService";
@@ -28,6 +28,7 @@ export const useTranscriptionHandler = ({
   const { toast } = useToast();
   
   const handleTranscription = useCallback(async (audioBlob: Blob) => {
+    console.log('Iniciando transcrição do áudio');
     setIsTranscribing(true);
 
     try {
@@ -56,25 +57,27 @@ export const useTranscriptionHandler = ({
         }
 
         const result = await response.json();
+        console.log('Resultado da transcrição:', result);
         segments = await processTranscriptionResult(result, audioBlob, apiKey);
       }
 
       if (segments.length > 0) {
-        const lastSegment = segments[segments.length - 1];
-        const triggers = findTriggers(lastSegment.text);
+        console.log('Processando segmentos da transcrição');
         
-        if (triggers.length > 0) {
-          lastSegment.triggers = triggers;
+        // Atualizar a ata com os segmentos processados
+        if (minutes && onMinutesUpdate) {
+          const updatedMinutes = updateMinutesFromTranscription(minutes, segments);
+          const minutesWithTriggers = updateMinutesWithTriggers(updatedMinutes, 
+            segments.flatMap(s => findTriggers(s.text))
+          );
           
-          if (minutes && onMinutesUpdate) {
-            const updatedMinutes = updateMinutesWithTriggers(minutes, triggers);
-            onMinutesUpdate(updatedMinutes);
-            
-            toast({
-              title: "Ação detectada",
-              description: "A ata foi atualizada com base nas palavras-chave identificadas.",
-            });
-          }
+          onMinutesUpdate(minutesWithTriggers);
+          console.log('Ata atualizada com sucesso');
+          
+          toast({
+            title: "Ata atualizada",
+            description: "A ata foi atualizada com o conteúdo da transcrição.",
+          });
         }
       }
       
@@ -82,7 +85,7 @@ export const useTranscriptionHandler = ({
 
       toast({
         title: "Transcrição concluída",
-        description: "A ata da reunião está pronta.",
+        description: "A transcrição foi processada com sucesso.",
       });
     } catch (error) {
       console.error('Erro na transcrição:', error);
