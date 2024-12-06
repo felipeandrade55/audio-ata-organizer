@@ -29,8 +29,15 @@ export const setupSystemAudio = async (micStream: MediaStream, audioContext: Aud
     
     // Simplificando as constraints para evitar erros
     const constraints = {
-      audio: true,
-      video: true // Necessário para forçar a seleção de uma fonte desktop
+      audio: {
+        echoCancellation: false, // Desabilita para evitar feedback
+        noiseSuppression: false, // Desabilita para melhor qualidade
+        autoGainControl: false   // Desabilita para manter volume original
+      },
+      video: {
+        width: 1, // Minimiza o impacto do vídeo
+        height: 1
+      }
     };
 
     // @ts-ignore - TypeScript não reconhece getDisplayMedia ainda
@@ -41,14 +48,16 @@ export const setupSystemAudio = async (micStream: MediaStream, audioContext: Aud
     // Verifica se conseguimos capturar o áudio
     const audioTracks = displayStream.getAudioTracks();
     console.log('Faixas de áudio disponíveis:', audioTracks.length);
+    console.log('Configurações das faixas:', audioTracks.map(track => track.getSettings()));
     
     if (audioTracks.length === 0) {
+      displayStream.getTracks().forEach(track => track.stop());
       toast({
         variant: "destructive",
         title: "Áudio não disponível",
-        description: "Não foi possível capturar o áudio do sistema. Certifique-se de selecionar 'Compartilhar áudio' na janela de compartilhamento do Chrome."
+        description: "Importante: Você precisa selecionar 'Guia' ou 'Aba' e marcar 'Compartilhar áudio' na janela do Chrome."
       });
-      throw new Error("Nenhuma fonte de áudio selecionada");
+      throw new Error("Nenhuma fonte de áudio selecionada. Certifique-se de marcar 'Compartilhar áudio'");
     }
 
     console.log('Configurando nós de áudio...');
@@ -70,7 +79,7 @@ export const setupSystemAudio = async (micStream: MediaStream, audioContext: Aud
 
     toast({
       title: "Áudio do sistema ativado",
-      description: "A gravação incluirá o áudio do sistema e do microfone. Certifique-se de ter selecionado 'Compartilhar áudio' na janela do Chrome."
+      description: "A gravação incluirá o áudio do sistema e do microfone."
     });
 
     console.log('Configuração do áudio do sistema concluída com sucesso');
