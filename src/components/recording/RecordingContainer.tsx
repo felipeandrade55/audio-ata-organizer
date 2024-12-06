@@ -11,6 +11,11 @@ import SystemAudioSwitch from "./SystemAudioSwitch";
 import { useRecording } from "@/hooks/useRecording";
 import { useTranscriptionLimit } from "@/hooks/useTranscriptionLimit";
 import { MeetingMinutes } from "@/types/meeting";
+import { RecordingHistorySection } from "@/components/history/RecordingHistorySection";
+import { MeetingHistorySection } from "@/components/history/MeetingHistorySection";
+import { useMeetings } from "@/hooks/useMeetings";
+import { useSupabase } from "@/providers/SupabaseProvider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 declare global {
   interface Window {
@@ -21,11 +26,18 @@ declare global {
 const RecordingContainer = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useSupabase();
   const { checkTranscriptionLimit } = useTranscriptionLimit();
   const [identificationEnabled, setIdentificationEnabled] = useState(false);
   const [systemAudioEnabled, setSystemAudioEnabled] = useState(false);
   const [transcriptionService, setTranscriptionService] = useState<'openai' | 'google'>('openai');
-  const [minutes, setMinutes] = useState<MeetingMinutes>({
+  const [meetingSearch, setMeetingSearch] = useState("");
+  const [meetingType, setMeetingType] = useState<string>("all");
+  const [recordingDateRange, setRecordingDateRange] = useState<string>("all");
+  
+  const { data: minutes, isLoading, error } = useMeetings(user?.id || "");
+
+  const [currentMinutes, setCurrentMinutes] = useState<MeetingMinutes>({
     id: crypto.randomUUID(),
     date: new Date().toLocaleDateString('pt-BR'),
     startTime: new Date().toLocaleTimeString('pt-BR'),
@@ -66,11 +78,19 @@ const RecordingContainer = () => {
   } = useRecording({
     apiKey: localStorage.getItem(`${transcriptionService}_api_key`) || '',
     transcriptionService,
-    minutes,
-    onMinutesUpdate: setMinutes,
+    minutes: currentMinutes,
+    onMinutesUpdate: setCurrentMinutes,
     beforeTranscriptionStart: checkTranscriptionLimit,
     systemAudioEnabled
   });
+
+  // Filter minutes based on search and type
+  const filteredMinutes = minutes?.filter(minute => {
+    const matchesSearch = minute.meetingTitle.toLowerCase().includes(meetingSearch.toLowerCase()) ||
+                         minute.summary?.toLowerCase().includes(meetingSearch.toLowerCase());
+    const matchesType = meetingType === 'all' || minute.meetingType === meetingType;
+    return matchesSearch && matchesType;
+  }) || [];
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('pt-BR', {
@@ -96,7 +116,7 @@ const RecordingContainer = () => {
       state: {
         segments: transcriptionSegments,
         date: formatDate(new Date()),
-        minutes,
+        minutes: currentMinutes,
       }
     });
   };
@@ -160,6 +180,34 @@ const RecordingContainer = () => {
                   />
                 </div>
               )}
+
+              <div className="w-full mt-8">
+                <Tabs defaultValue="recording" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="recording">Gravações</TabsTrigger>
+                    <TabsTrigger value="minutes">Atas</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="recording" className="mt-4">
+                    <RecordingHistorySection
+                      recordingDateRange={recordingDateRange}
+                      setRecordingDateRange={setRecordingDateRange}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="minutes" className="mt-4">
+                    <MeetingHistorySection
+                      meetingSearch={meetingSearch}
+                      setMeetingSearch={setMeetingSearch}
+                      meetingType={meetingType}
+                      setMeetingType={setMeetingType}
+                      filteredMinutes={filteredMinutes}
+                      isLoading={isLoading}
+                      error={error}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
             </div>
           </CardContent>
         </Card>
