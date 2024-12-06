@@ -42,6 +42,11 @@ const RecordingContainer = () => {
     tags: []
   });
 
+  // Atualiza a variável global quando systemAudioEnabled muda
+  useEffect(() => {
+    window.systemAudioEnabled = systemAudioEnabled;
+  }, [systemAudioEnabled]);
+
   const {
     isRecording,
     isPaused,

@@ -55,28 +55,30 @@ const RecordingControls = ({
       setAudioContext(context);
       setAnalyser(micAnalyser);
 
-      // Try to get system audio
-      try {
-        // @ts-ignore - TypeScript doesn't recognize getDisplayMedia yet
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false
-          },
-          video: {
-            width: 1,
-            height: 1
-          }
-        });
+      // Try to get system audio only if systemAudioEnabled is true
+      if (window.systemAudioEnabled) {
+        try {
+          // @ts-ignore - TypeScript doesn't recognize getDisplayMedia yet
+          const displayStream = await navigator.mediaDevices.getDisplayMedia({
+            audio: {
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false
+            },
+            video: {
+              width: 1,
+              height: 1
+            }
+          });
 
-        const systemSource = context.createMediaStreamSource(displayStream);
-        const systemAnalyser = context.createAnalyser();
-        systemAnalyser.fftSize = 2048;
-        systemSource.connect(systemAnalyser);
-        setSystemAnalyser(systemAnalyser);
-      } catch (error) {
-        console.log('System audio not available:', error);
+          const systemSource = context.createMediaStreamSource(displayStream);
+          const systemAnalyser = context.createAnalyser();
+          systemAnalyser.fftSize = 2048;
+          systemSource.connect(systemAnalyser);
+          setSystemAnalyser(systemAnalyser);
+        } catch (error) {
+          console.log('System audio not available:', error);
+        }
       }
     } catch (error) {
       console.error("Erro ao configurar contexto de áudio:", error);
