@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 
 interface AudioStreamResult {
   stream: MediaStream;

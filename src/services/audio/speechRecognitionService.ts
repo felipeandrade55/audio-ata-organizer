@@ -1,6 +1,6 @@
 import { voiceIdentificationService } from '../voiceIdentificationService';
 import { handleNameRecognition } from '../nameRecognitionService';
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 
 export const setupSpeechRecognition = () => {
   const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();

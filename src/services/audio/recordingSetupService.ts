@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 
 export const validateApiKey = (apiKey: string, transcriptionService: 'openai' | 'google') => {
   if (!apiKey) {
