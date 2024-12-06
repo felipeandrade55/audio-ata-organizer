@@ -33,7 +33,7 @@ export const transcribeWithGoogleCloud = async (
         enableAutomaticPunctuation: true,
         enableSpeakerDiarization: true,
         diarizationSpeakerCount: 2,
-        model: 'default',
+        model: 'default'
       },
       audio: {
         content: audioBytes
