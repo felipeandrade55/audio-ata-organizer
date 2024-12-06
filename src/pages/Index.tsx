@@ -1,6 +1,8 @@
 import { useSupabase } from "@/providers/SupabaseProvider";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Mic, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LogOut, User, Mic, Calendar, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import AuthForm from "@/components/auth/AuthForm";
@@ -11,11 +13,17 @@ import { RecordingHistory } from "@/components/recording/RecordingHistory";
 import { MeetingsList } from "@/components/meeting/MeetingsList";
 import { useMeetings } from "@/hooks/useMeetings";
 import { SettingsMenu } from "@/components/settings/SettingsMenu";
+import { useState } from "react";
 
 const Index = () => {
   const { user } = useSupabase();
   const { toast } = useToast();
   const { data: minutes, isLoading, error } = useMeetings(user?.id || "");
+
+  // Filters state
+  const [meetingSearch, setMeetingSearch] = useState("");
+  const [meetingType, setMeetingType] = useState<string>("");
+  const [recordingDateRange, setRecordingDateRange] = useState<string>("");
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -24,6 +32,14 @@ const Index = () => {
       description: "Até logo!",
     });
   };
+
+  // Filter meetings based on search and type
+  const filteredMinutes = minutes?.filter(minute => {
+    const matchesSearch = minute.meetingTitle.toLowerCase().includes(meetingSearch.toLowerCase()) ||
+                         minute.summary?.toLowerCase().includes(meetingSearch.toLowerCase());
+    const matchesType = !meetingType || minute.meetingType === meetingType;
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-gray-50 dark:from-gray-900 dark:to-emerald-900">
@@ -70,78 +86,82 @@ const Index = () => {
 
               {/* Recording Section */}
               <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6"
-                >
-                  <div className="p-2 sm:p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                    <Mic className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                      Enoque Transcritor
-                    </h2>
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                      Grave e transcreva suas reuniões com facilidade
-                    </p>
-                  </div>
-                </motion.div>
+                <RecordingContainer />
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                  className="bg-gradient-to-br from-emerald-50/50 to-gray-50/50 dark:from-emerald-900/30 dark:to-gray-800/30 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-lg border border-emerald-100/50 dark:border-emerald-700/30"
-                >
-                  <RecordingContainer />
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                >
-                  <RecordingHistory />
-                </motion.div>
-              </div>
-
-              {/* Meetings Section */}
-              <div className="border-t border-emerald-100 dark:border-emerald-800 p-4 sm:p-6">
-                <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <div className="p-2 sm:p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                    <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400" />
+                {/* History Sections Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Recording History Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        Histórico de Gravações
+                      </h3>
+                      <Select
+                        value={recordingDateRange}
+                        onValueChange={setRecordingDateRange}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Filtrar por período" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="today">Hoje</SelectItem>
+                          <SelectItem value="week">Última semana</SelectItem>
+                          <SelectItem value="month">Último mês</SelectItem>
+                          <SelectItem value="all">Todos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <RecordingHistory />
                   </div>
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
-                      Suas Atas
-                    </h3>
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                      Histórico de reuniões e atas
-                    </p>
+
+                  {/* Meeting Minutes History Section */}
+                  <div className="space-y-4">
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                          Histórico de Atas
+                        </h3>
+                        <Select
+                          value={meetingType}
+                          onValueChange={setMeetingType}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Tipo de reunião" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Todos</SelectItem>
+                            <SelectItem value="initial">Inicial</SelectItem>
+                            <SelectItem value="followup">Acompanhamento</SelectItem>
+                            <SelectItem value="review">Revisão</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                        <Input
+                          type="text"
+                          placeholder="Buscar por título ou conteúdo..."
+                          value={meetingSearch}
+                          onChange={(e) => setMeetingSearch(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    
+                    {isLoading ? (
+                      <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600 mx-auto mb-3" />
+                        Carregando suas atas...
+                      </div>
+                    ) : error ? (
+                      <div className="p-6 text-center text-red-500">
+                        Erro ao carregar atas: {error.message}
+                      </div>
+                    ) : (
+                      <MeetingsList minutes={filteredMinutes || []} />
+                    )}
                   </div>
                 </div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                  className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-emerald-100 dark:border-emerald-800"
-                >
-                  {isLoading ? (
-                    <div className="p-6 sm:p-8 text-center text-gray-500 dark:text-gray-400">
-                      <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-emerald-600 mx-auto mb-3 sm:mb-4" />
-                      Carregando suas atas...
-                    </div>
-                  ) : error ? (
-                    <div className="p-6 sm:p-8 text-center text-red-500">
-                      Erro ao carregar atas: {error.message}
-                    </div>
-                  ) : (
-                    <MeetingsList minutes={minutes || []} />
-                  )}
-                </motion.div>
               </div>
             </motion.div>
           </motion.div>
