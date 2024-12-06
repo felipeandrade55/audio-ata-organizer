@@ -15,27 +15,9 @@ export const useMeetings = (userId: string | undefined) => {
 
   const fetchMinutes = async () => {
     try {
-      // First, fetch the basic meeting minutes data
       const { data: meetingsData, error: meetingsError } = await supabase
         .from('meeting_minutes')
-        .select(`
-          id,
-          date,
-          start_time,
-          end_time,
-          location,
-          meeting_title,
-          organizer,
-          summary,
-          author,
-          approver,
-          meeting_type,
-          confidentiality_level,
-          version,
-          status,
-          last_modified,
-          created_at
-        `)
+        .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
