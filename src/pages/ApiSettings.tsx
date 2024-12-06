@@ -4,9 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 const ApiSettings = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [openaiKey, setOpenaiKey] = useState("");
   const [googleKey, setGoogleKey] = useState("");
 
@@ -31,6 +34,15 @@ const ApiSettings = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
+      <Button
+        variant="ghost"
+        className="mb-4"
+        onClick={() => navigate("/")}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Voltar
+      </Button>
+      
       <Card>
         <CardHeader>
           <CardTitle>Configurações de API</CardTitle>
