@@ -39,7 +39,8 @@ export function KanbanColumn({
         .from("kanban_tasks")
         .insert({
           title: newTaskTitle,
-          status: id,
+          column_id: id,
+          status: "todo", // Set a default status
         })
         .select()
         .single();
