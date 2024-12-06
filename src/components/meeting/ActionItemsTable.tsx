@@ -4,10 +4,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ActionItem } from "@/types/meeting";
 
 interface ActionItemsTableProps {
-  actionItems: ActionItem[];
+  actionItems?: ActionItem[];
 }
 
-const ActionItemsTable = ({ actionItems }: ActionItemsTableProps) => {
+const ActionItemsTable = ({ actionItems = [] }: ActionItemsTableProps) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
