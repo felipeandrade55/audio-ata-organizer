@@ -1,66 +1,49 @@
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { motion } from "framer-motion";
+import { Settings2 } from "lucide-react";
 
 interface RecordingConfigProps {
-  identificationEnabled: boolean;
   transcriptionService: 'openai' | 'google';
-  onIdentificationToggle: (enabled: boolean) => void;
   onServiceChange: (service: 'openai' | 'google') => void;
 }
 
 const RecordingConfig = ({
-  identificationEnabled,
   transcriptionService,
-  onIdentificationToggle,
   onServiceChange,
 }: RecordingConfigProps) => {
   return (
-    <div className="w-full max-w-md space-y-4">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="identification">Identificação de Participantes</Label>
-        <Switch
-          id="identification"
-          checked={identificationEnabled}
-          onCheckedChange={onIdentificationToggle}
-        />
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
+      className="w-full max-w-md space-y-4"
+    >
+      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <Settings2 className="h-4 w-4" />
+        <span>Configurações de Transcrição</span>
       </div>
 
-      <div className="space-y-2">
-        <Label>Serviço de Transcrição</Label>
-        <Select 
-          value={transcriptionService} 
-          onValueChange={onServiceChange}
-          defaultValue="openai"
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o serviço" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="openai">OpenAI Whisper</SelectItem>
-            <SelectItem value="google">Google Cloud Speech-to-Text</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+        <div className="space-y-2">
+          <Label>Serviço de Transcrição</Label>
+          <RadioGroup
+            value={transcriptionService}
+            onValueChange={(value) => onServiceChange(value as 'openai' | 'google')}
+            className="flex flex-col space-y-1"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="openai" id="openai" />
+              <Label htmlFor="openai">OpenAI (Whisper)</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="google" id="google" />
+              <Label htmlFor="google">Google Cloud Speech-to-Text</Label>
+            </div>
+          </RadioGroup>
+        </div>
       </div>
-
-      <div className="flex justify-end">
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/api-settings" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Configurar APIs
-          </Link>
-        </Button>
-      </div>
-    </div>
+    </motion.div>
   );
 };
 

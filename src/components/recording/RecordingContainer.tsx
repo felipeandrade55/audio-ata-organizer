@@ -122,9 +122,7 @@ const RecordingContainer = () => {
               </div>
 
               <RecordingConfig
-                identificationEnabled={identificationEnabled}
                 transcriptionService={transcriptionService}
-                onIdentificationToggle={setIdentificationEnabled}
                 onServiceChange={setTranscriptionService}
               />
 
