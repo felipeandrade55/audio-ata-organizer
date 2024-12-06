@@ -27,10 +27,40 @@ export const useTranscriptionHandler = ({
   onMinutesUpdate,
 }: TranscriptionHandlerProps) => {
   const { toast } = useToast();
+
+  const createOrUpdateMeetingMinutes = async (minutes: MeetingMinutes) => {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      const meetingData = {
+        ...minutes,
+        user_id: session.user.id,
+      };
+
+      const { data, error } = await supabase
+        .from('meeting_minutes')
+        .upsert([meetingData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao salvar ata:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erro ao criar/atualizar ata:', error);
+      throw error;
+    }
+  };
   
   const saveTranscriptionToHistory = async (audioBlob: Blob, transcriptionText: string, meetingId?: string) => {
     try {
-      // Verificar se o usuário está autenticado
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session) {
@@ -40,11 +70,9 @@ export const useTranscriptionHandler = ({
 
       console.log('Salvando transcrição para usuário:', session.user.id);
 
-      // Criar uma cópia do blob para evitar o erro de stream já lido
       const audioBlobCopy = audioBlob.slice(0, audioBlob.size);
-
-      // Primeiro, salvamos o arquivo de áudio no bucket do Supabase
       const audioFileName = `recording-${Date.now()}.wav`;
+      
       const { data: audioData, error: audioError } = await supabase.storage
         .from('meeting_recordings')
         .upload(audioFileName, audioBlobCopy);
@@ -56,7 +84,6 @@ export const useTranscriptionHandler = ({
 
       console.log('Áudio salvo com sucesso:', audioFileName);
 
-      // Agora salvamos o registro na tabela transcription_history
       const { data: transcriptionData, error: transcriptionError } = await supabase
         .from('transcription_history')
         .insert([
@@ -141,20 +168,51 @@ export const useTranscriptionHandler = ({
       if (segments.length > 0) {
         console.log('Processando segmentos da transcrição:', segments);
         
-        // Criar uma cópia do blob para o histórico
+        let meetingMinutes = minutes;
+        if (!meetingMinutes) {
+          // Create new meeting minutes if none exist
+          meetingMinutes = {
+            id: crypto.randomUUID(),
+            date: new Date().toLocaleDateString('pt-BR'),
+            startTime: new Date().toLocaleTimeString('pt-BR'),
+            endTime: '',
+            location: 'Virtual - Gravação de Áudio',
+            meetingTitle: 'Nova Reunião',
+            organizer: '',
+            participants: [],
+            agendaItems: [],
+            actionItems: [],
+            summary: '',
+            nextSteps: [],
+            author: 'Sistema de Transcrição',
+            meetingType: 'initial',
+            confidentialityLevel: 'internal',
+            legalReferences: [],
+            version: 1,
+            status: 'draft',
+            lastModified: new Date().toISOString(),
+            tags: []
+          };
+        }
+
+        // Save or update meeting minutes first
+        const savedMinutes = await createOrUpdateMeetingMinutes(meetingMinutes);
+        console.log('Ata salva/atualizada:', savedMinutes);
+        
+        // Create a copy of the blob for the history
         const audioBlobCopy = audioBlob.slice(0, audioBlob.size);
         const transcriptionText = segments.map(s => `${s.speaker}: ${s.text}`).join('\n');
         
         try {
-          await saveTranscriptionToHistory(audioBlobCopy, transcriptionText, minutes?.id);
+          await saveTranscriptionToHistory(audioBlobCopy, transcriptionText, savedMinutes.id);
           console.log('Transcrição salva no histórico com sucesso');
         } catch (error) {
           console.error('Erro ao salvar no histórico:', error);
-          // Continua o processo mesmo se falhar o salvamento no histórico
+          // Continue even if history save fails
         }
         
-        if (minutes && onMinutesUpdate) {
-          const updatedMinutes = await updateMinutesFromTranscription(minutes, segments);
+        if (onMinutesUpdate) {
+          const updatedMinutes = await updateMinutesFromTranscription(meetingMinutes, segments);
           const minutesWithTriggers = updateMinutesWithTriggers(updatedMinutes, 
             segments.flatMap(s => findTriggers(s.text))
           );
