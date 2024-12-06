@@ -4,15 +4,26 @@ import { motion } from "framer-motion";
 import { MeetingMinutes } from "@/types/meeting";
 import { Bot, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface MeetingsListProps {
   minutes: MeetingMinutes[];
+  selectedIds: string[];
+  onSelectMinute: (id: string) => void;
 }
 
-export const MeetingsList = ({ minutes }: MeetingsListProps) => {
+export const MeetingsList = ({ 
+  minutes,
+  selectedIds,
+  onSelectMinute
+}: MeetingsListProps) => {
   const navigate = useNavigate();
 
-  const handleMinuteClick = (minute: MeetingMinutes) => {
+  const handleMinuteClick = (minute: MeetingMinutes, isCheckboxClick: boolean) => {
+    if (isCheckboxClick) {
+      onSelectMinute(minute.id);
+      return;
+    }
     navigate('/transcription', { 
       state: { 
         minutes: minute,
@@ -55,11 +66,25 @@ export const MeetingsList = ({ minutes }: MeetingsListProps) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           whileHover={{ scale: 1.02 }}
-          className="cursor-pointer w-full"
-          onClick={() => handleMinuteClick(minute)}
+          className="w-full"
         >
-          <Card className="p-4 hover:shadow-lg transition-shadow h-full">
-            <div className="flex flex-col gap-2">
+          <Card className="p-4 hover:shadow-lg transition-shadow h-full relative">
+            <div 
+              className="absolute top-4 left-4 z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMinuteClick(minute, true);
+              }}
+            >
+              <Checkbox
+                checked={selectedIds.includes(minute.id)}
+                className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+              />
+            </div>
+            <div 
+              className="flex flex-col gap-2 cursor-pointer pl-8"
+              onClick={() => handleMinuteClick(minute, false)}
+            >
               <h4 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
                 {minute.meetingTitle}
               </h4>
