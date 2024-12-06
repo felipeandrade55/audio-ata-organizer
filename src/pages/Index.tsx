@@ -1,4 +1,3 @@
-import RecordingContainer from "@/components/recording/RecordingContainer";
 import { useSupabase } from "@/providers/SupabaseProvider";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Mic, Star, Triangle, Circle } from "lucide-react";
@@ -6,97 +5,22 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import AuthForm from "@/components/auth/AuthForm";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { MeetingMinutes } from "@/types/meeting";
-import { Card } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import RecordingContainer from "@/components/recording/RecordingContainer";
 import { ProfileSettings } from "@/components/profile/ProfileSettings";
 import { RecordingHistory } from "@/components/recording/RecordingHistory";
+import { MeetingsList } from "@/components/meeting/MeetingsList";
+import { useMeetings } from "@/hooks/useMeetings";
 
 const Index = () => {
   const { user } = useSupabase();
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const [minutes, setMinutes] = useState<MeetingMinutes[]>([]);
-
-  useEffect(() => {
-    if (user) {
-      fetchMinutes();
-    }
-  }, [user]);
-
-  const fetchMinutes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('meeting_minutes')
-        .select(`
-          id,
-          date,
-          start_time,
-          end_time,
-          location,
-          meeting_title,
-          organizer,
-          summary,
-          author,
-          approver,
-          meeting_type,
-          confidentiality_level,
-          version,
-          status,
-          last_modified,
-          created_at
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      // Transform the data to match the MeetingMinutes interface
-      const transformedData = data?.map(item => ({
-        ...item,
-        id: item.id,
-        meetingTitle: item.meeting_title,
-        startTime: item.start_time,
-        endTime: item.end_time,
-        confidentialityLevel: item.confidentiality_level,
-        lastModified: item.last_modified,
-        meetingType: item.meeting_type || 'other',
-        participants: [], // These will be loaded separately if needed
-        agendaItems: [], // These will be loaded separately if needed
-        actionItems: [], // These will be loaded separately if needed
-        nextSteps: [], // This might need to be added to the database if required
-        legalReferences: [], // These will be loaded separately if needed
-        tags: [], // This might need to be added to the database if required
-      })) || [];
-
-      setMinutes(transformedData);
-    } catch (error) {
-      console.error('Erro ao buscar atas:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as atas.",
-        variant: "destructive",
-      });
-    }
-  };
+  const { minutes } = useMeetings(user?.id);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast({
       title: "Logout realizado com sucesso",
       description: "Até logo!",
-    });
-  };
-
-  const handleMinuteClick = (minute: MeetingMinutes) => {
-    navigate('/transcription', { 
-      state: { 
-        minutes: minute,
-        date: minute.date,
-        segments: [] // Você pode adicionar os segmentos se necessário
-      } 
     });
   };
 
@@ -196,30 +120,7 @@ const Index = () => {
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
                   Suas Atas
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {minutes.map((minute) => (
-                    <motion.div
-                      key={minute.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ scale: 1.02 }}
-                      className="cursor-pointer"
-                      onClick={() => handleMinuteClick(minute)}
-                    >
-                      <Card className="p-4 hover:shadow-lg transition-shadow">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                          {minute.meetingTitle}
-                        </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {minute.date} - {minute.startTime}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
-                          {minute.summary || "Sem resumo disponível"}
-                        </p>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </div>
+                <MeetingsList minutes={minutes} />
               </div>
             </div>
           </motion.div>
