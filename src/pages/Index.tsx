@@ -13,8 +13,6 @@ import { useNavigate } from "react-router-dom";
 import { ProfileSettings } from "@/components/profile/ProfileSettings";
 import { RecordingHistory } from "@/components/recording/RecordingHistory";
 
-// ... keep existing code (imports and component setup)
-
 const Index = () => {
   const { user } = useSupabase();
   const { toast } = useToast();
@@ -31,7 +29,24 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from('meeting_minutes')
-        .select('*')
+        .select(`
+          id,
+          date,
+          start_time,
+          end_time,
+          location,
+          meeting_title,
+          organizer,
+          summary,
+          author,
+          approver,
+          meeting_type,
+          confidentiality_level,
+          version,
+          status,
+          last_modified,
+          created_at
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -41,11 +56,19 @@ const Index = () => {
       // Transform the data to match the MeetingMinutes interface
       const transformedData = data?.map(item => ({
         ...item,
+        id: item.id,
         meetingTitle: item.meeting_title,
         startTime: item.start_time,
         endTime: item.end_time,
         confidentialityLevel: item.confidentiality_level,
         lastModified: item.last_modified,
+        meetingType: item.meeting_type || 'other',
+        participants: [], // These will be loaded separately if needed
+        agendaItems: [], // These will be loaded separately if needed
+        actionItems: [], // These will be loaded separately if needed
+        nextSteps: [], // This might need to be added to the database if required
+        legalReferences: [], // These will be loaded separately if needed
+        tags: [], // This might need to be added to the database if required
       })) || [];
 
       setMinutes(transformedData);
