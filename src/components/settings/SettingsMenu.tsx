@@ -1,8 +1,15 @@
-import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
-import { useSupabase } from "@/providers/SupabaseProvider";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Settings } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+import { useSupabase } from "@/providers/SupabaseProvider";
 
 export const SettingsMenu = () => {
   const { user } = useSupabase();
@@ -12,37 +19,41 @@ export const SettingsMenu = () => {
     const checkAdminStatus = async () => {
       if (!user) return;
 
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
 
-      if (error) {
-        console.error('Error fetching user role:', error);
-        return;
+        if (error) {
+          console.error('Error fetching user role:', error);
+          return;
+        }
+
+        setIsAdmin(data?.role === 'admin');
+      } catch (error) {
+        console.error('Error in checkAdminStatus:', error);
       }
-
-      setIsAdmin(profile?.role === 'admin');
     };
 
     checkAdminStatus();
   }, [user]);
 
-  if (!isAdmin) return null;
-
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      className="gap-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-      onClick={() => {
-        // Implementaremos a navegação para a página de configurações posteriormente
-        console.log('Settings clicked');
-      }}
-    >
-      <Settings className="h-4 w-4" />
-      Configurações
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Settings className="h-5 w-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link to="/api-settings" className="w-full cursor-pointer">
+            Configurar APIs
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

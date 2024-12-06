@@ -12,6 +12,10 @@ export const processTranscriptionResult = async (
 ): Promise<TranscriptionSegment[]> => {
   console.log('Processando resultado da transcrição:', result);
   
+  if (!apiKey) {
+    throw new Error('API key não configurada. Por favor, configure sua chave API nas configurações.');
+  }
+
   const segments = result.segments.map((segment: any) => {
     const audioFeatures = new Float32Array(segment.tokens.length);
     const timestamp = segment.start * 1000;
@@ -32,23 +36,28 @@ export const processTranscriptionResult = async (
     };
   });
 
-  // Analisar emoções
-  const emotions = await analyzeEmotions(audioBlob, apiKey);
-  
-  // Associar emoções aos segmentos correspondentes
-  const processedSegments = segments.map(segment => {
-    const emotion = emotions.find(e => e.text === segment.text);
-    return {
-      ...segment,
-      emotion: emotion ? {
-        type: emotion.emotion,
-        confidence: emotion.confidence
-      } : undefined
-    };
-  });
+  try {
+    // Analisar emoções
+    const emotions = await analyzeEmotions(audioBlob, apiKey);
+    
+    // Associar emoções aos segmentos correspondentes
+    const processedSegments = segments.map(segment => {
+      const emotion = emotions.find(e => e.text === segment.text);
+      return {
+        ...segment,
+        emotion: emotion ? {
+          type: emotion.emotion,
+          confidence: emotion.confidence
+        } : undefined
+      };
+    });
 
-  console.log('Segmentos processados:', processedSegments);
-  return processedSegments;
+    console.log('Segmentos processados:', processedSegments);
+    return processedSegments;
+  } catch (error) {
+    console.error('Erro na análise de emoções:', error);
+    return segments;
+  }
 };
 
 export const updateMinutesFromTranscription = async (
