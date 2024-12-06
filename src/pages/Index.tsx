@@ -1,6 +1,6 @@
 import { useSupabase } from "@/providers/SupabaseProvider";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Mic, Calendar, Settings } from "lucide-react";
+import { LogOut, User, Mic, Calendar } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import AuthForm from "@/components/auth/AuthForm";
@@ -10,6 +10,7 @@ import { ProfileSettings } from "@/components/profile/ProfileSettings";
 import { RecordingHistory } from "@/components/recording/RecordingHistory";
 import { MeetingsList } from "@/components/meeting/MeetingsList";
 import { useMeetings } from "@/hooks/useMeetings";
+import { SettingsMenu } from "@/components/settings/SettingsMenu";
 
 const Index = () => {
   const { user } = useSupabase();
@@ -54,6 +55,7 @@ const Index = () => {
                 </div>
                 <div className="flex gap-2 sm:gap-3">
                   <ProfileSettings />
+                  <SettingsMenu />
                   <Button 
                     variant="outline" 
                     size="sm" 
