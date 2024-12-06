@@ -2,6 +2,8 @@ export interface Segment {
   speaker: string;
   text: string;
   timestamp: string;
+  start: number;  // Adicionado
+  end: number;    // Adicionado
   emotion?: {
     type: string;
     confidence: number;

@@ -18,6 +18,7 @@ export const processTranscriptionResult = async (
       segments.push({
         speaker: segment.speaker,
         text: segment.text,
+        timestamp: segment.timestamp,
         start: segment.start,
         end: segment.end,
       });
