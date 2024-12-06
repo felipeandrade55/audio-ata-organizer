@@ -24,18 +24,26 @@ interface AnalysisResult {
 
 export const analyzeTranscription = async (
   segments: TranscriptionSegment[],
-  minutes: MeetingMinutes
+  minutes: MeetingMinutes,
+  audioPath?: string // Add audioPath parameter
 ): Promise<AnalysisResult | null> => {
   try {
+    console.log('Starting transcription analysis with audio path:', audioPath);
     const transcriptionText = segments.map(s => `${s.speaker}: ${s.text}`).join('\n');
     
-    // Save transcription to history
+    if (!audioPath) {
+      console.error('No audio path provided for transcription analysis');
+      throw new Error('Audio path is required for transcription analysis');
+    }
+
+    // Save transcription to history with audio path
     const { data: transcriptionRecord, error: saveError } = await supabase
       .from('transcription_history')
       .insert({
         meeting_id: minutes.id,
         transcription_text: transcriptionText,
-        status: 'processing'
+        status: 'processing',
+        audio_path: audioPath // Include the audio path
       })
       .select()
       .single();

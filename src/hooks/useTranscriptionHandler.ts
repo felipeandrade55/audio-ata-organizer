@@ -41,6 +41,19 @@ export const useTranscriptionHandler = ({
       const cleanApiKey = apiKey.trim();
       let segments: TranscriptionSegment[];
 
+      // Generate a unique filename for the audio
+      const timestamp = new Date().getTime();
+      const audioFileName = `audio_${timestamp}.wav`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('meeting_recordings')
+        .upload(audioFileName, audioBlob);
+
+      if (uploadError) {
+        throw new Error('Failed to upload audio file');
+      }
+
+      const audioPath = uploadData.path;
+
       if (transcriptionService === 'google') {
         segments = await transcribeWithGoogleCloud(audioBlob, cleanApiKey);
       } else {
@@ -78,8 +91,8 @@ export const useTranscriptionHandler = ({
       if (segments.length > 0 && minutes) {
         console.log('Processando segmentos da transcrição:', segments);
         
-        // Analyze transcription with OpenAI
-        const analysis = await analyzeTranscription(segments, minutes);
+        // Analyze transcription with OpenAI, passing the audio path
+        const analysis = await analyzeTranscription(segments, minutes, audioPath);
         
         if (analysis) {
           const updatedMinutes = {
