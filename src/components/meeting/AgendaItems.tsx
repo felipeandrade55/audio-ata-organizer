@@ -3,10 +3,10 @@ import { ListTodo } from "lucide-react";
 import { AgendaItem } from "@/types/meeting";
 
 interface AgendaItemsProps {
-  agendaItems: AgendaItem[];
+  agendaItems?: AgendaItem[];
 }
 
-const AgendaItems = ({ agendaItems }: AgendaItemsProps) => {
+const AgendaItems = ({ agendaItems = [] }: AgendaItemsProps) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
