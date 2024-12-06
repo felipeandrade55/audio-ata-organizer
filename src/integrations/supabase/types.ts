@@ -385,6 +385,50 @@ export type Database = {
         }
         Relationships: []
       }
+      transcription_history: {
+        Row: {
+          audio_path: string
+          created_at: string
+          error_message: string | null
+          id: string
+          meeting_id: string | null
+          processed_at: string | null
+          retry_count: number | null
+          status: string
+          transcription_text: string | null
+        }
+        Insert: {
+          audio_path: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          meeting_id?: string | null
+          processed_at?: string | null
+          retry_count?: number | null
+          status?: string
+          transcription_text?: string | null
+        }
+        Update: {
+          audio_path?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          meeting_id?: string | null
+          processed_at?: string | null
+          retry_count?: number | null
+          status?: string
+          transcription_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcription_history_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_minutes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

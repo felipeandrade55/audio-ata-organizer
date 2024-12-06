@@ -11,6 +11,9 @@ import { MeetingMinutes } from "@/types/meeting";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { ProfileSettings } from "@/components/profile/ProfileSettings";
+import { RecordingHistory } from "@/components/recording/RecordingHistory";
+
+// ... keep existing code (imports and component setup)
 
 const Index = () => {
   const { user } = useSupabase();
@@ -76,7 +79,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 relative overflow-hidden">
-      {/* Elementos decorativos */}
+      {/* Decorative elements */}
       <motion.div
         initial={{ opacity: 0, scale: 0 }}
         animate={{ opacity: 0.1, scale: 1 }}
@@ -162,6 +165,7 @@ const Index = () => {
                   </div>
                 </motion.div>
                 <RecordingContainer />
+                <RecordingHistory />
               </div>
 
               {/* Seção de Atas */}
