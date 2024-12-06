@@ -1,6 +1,8 @@
 import { TranscriptionSegment } from "@/types/transcription";
 import { analyzeEmotions } from "./emotionDetectionService";
 import { supabase } from "@/lib/supabase";
+import { MeetingMinutes } from "@/types/meeting";
+import { analyzeTranscription } from "./aiAnalysisService";
 
 export const processTranscriptionResult = async (
   result: any,
