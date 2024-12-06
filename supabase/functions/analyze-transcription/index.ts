@@ -87,18 +87,17 @@ serve(async (req) => {
       console.log('Cleaned content:', content);
       analysis = JSON.parse(content);
       console.log('Parsed analysis:', analysis);
+
+      // Validate required fields
+      if (!analysis.summary || !Array.isArray(analysis.sentimentAnalysis) || 
+          !Array.isArray(analysis.keyMoments) || !Array.isArray(analysis.concerns) || 
+          !Array.isArray(analysis.engagementTopics)) {
+        throw new Error('Missing required fields in analysis');
+      }
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
       console.log('Raw content:', data.choices[0].message.content);
-      throw new Error('Failed to parse OpenAI response');
-    }
-
-    // Validate analysis structure
-    if (!analysis.summary || !Array.isArray(analysis.sentimentAnalysis) || 
-        !Array.isArray(analysis.keyMoments) || !Array.isArray(analysis.concerns) || 
-        !Array.isArray(analysis.engagementTopics)) {
-      console.error('Invalid analysis structure:', analysis);
-      throw new Error('Invalid analysis structure');
+      throw new Error('Failed to parse OpenAI response: ' + parseError.message);
     }
 
     // Update transcription record with analysis
@@ -156,7 +155,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in analyze-transcription function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }),
       { 
         status: 500,
         headers: { 
