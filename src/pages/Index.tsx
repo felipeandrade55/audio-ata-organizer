@@ -12,6 +12,8 @@ import { useState } from "react";
 import { useMeetings } from "@/hooks/useMeetings";
 import { RecordingHistorySection } from "@/components/history/RecordingHistorySection";
 import { MeetingHistorySection } from "@/components/history/MeetingHistorySection";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 
 const Index = () => {
   const { user } = useSupabase();
@@ -82,29 +84,41 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Recording Section */}
+              {/* Main Content */}
               <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-                <RecordingContainer />
-
-                {/* History Sections Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Recording History Section */}
-                  <RecordingHistorySection
-                    recordingDateRange={recordingDateRange}
-                    setRecordingDateRange={setRecordingDateRange}
-                  />
-
-                  {/* Meeting Minutes History Section */}
-                  <MeetingHistorySection
-                    meetingSearch={meetingSearch}
-                    setMeetingSearch={setMeetingSearch}
-                    meetingType={meetingType}
-                    setMeetingType={setMeetingType}
-                    filteredMinutes={filteredMinutes || []}
-                    isLoading={isLoading}
-                    error={error}
-                  />
-                </div>
+                <Tabs defaultValue="recording" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-4">
+                    <TabsTrigger value="recording">Gravação</TabsTrigger>
+                    <TabsTrigger value="history">Histórico</TabsTrigger>
+                    <TabsTrigger value="tasks">Tarefas</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="recording">
+                    <RecordingContainer />
+                  </TabsContent>
+                  
+                  <TabsContent value="history">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <RecordingHistorySection
+                        recordingDateRange={recordingDateRange}
+                        setRecordingDateRange={setRecordingDateRange}
+                      />
+                      <MeetingHistorySection
+                        meetingSearch={meetingSearch}
+                        setMeetingSearch={setMeetingSearch}
+                        meetingType={meetingType}
+                        setMeetingType={setMeetingType}
+                        filteredMinutes={filteredMinutes || []}
+                        isLoading={isLoading}
+                        error={error}
+                      />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="tasks">
+                    <KanbanBoard userId={user.id} />
+                  </TabsContent>
+                </Tabs>
               </div>
             </motion.div>
           </motion.div>
