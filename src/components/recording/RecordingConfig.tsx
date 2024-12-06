@@ -7,6 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
 
 interface RecordingConfigProps {
   identificationEnabled: boolean;
@@ -47,6 +50,15 @@ const RecordingConfig = ({
             <SelectItem value="google">Google Cloud Speech-to-Text</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/api-settings" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Configurar APIs
+          </Link>
+        </Button>
       </div>
     </div>
   );

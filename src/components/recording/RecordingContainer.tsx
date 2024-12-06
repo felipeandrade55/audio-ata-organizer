@@ -9,7 +9,6 @@ import TranscriptionSummary from "./TranscriptionSummary";
 import { useRecording } from "@/hooks/useRecording";
 import { useTranscriptionLimit } from "@/hooks/useTranscriptionLimit";
 import { MeetingMinutes } from "@/types/meeting";
-import { API_KEYS } from "@/config/apiKeys";
 
 const RecordingContainer = () => {
   const navigate = useNavigate();
@@ -41,11 +40,11 @@ const RecordingContainer = () => {
   });
 
   const validateApiKey = (service: 'openai' | 'google') => {
-    const apiKey = API_KEYS[service];
-    if (!apiKey || apiKey.trim() === '' || apiKey.includes('sua-chave') || apiKey === 'your_google_api_key_here') {
+    const apiKey = localStorage.getItem(`${service}_api_key`);
+    if (!apiKey || apiKey.trim() === '') {
       toast({
         title: "Configuração Necessária",
-        description: `Por favor, configure uma chave de API válida para ${service === 'openai' ? 'OpenAI' : 'Google'} no arquivo .env antes de iniciar a gravação.`,
+        description: `Por favor, configure uma chave de API válida para ${service === 'openai' ? 'OpenAI' : 'Google'} nas configurações antes de iniciar a gravação.`,
         variant: "destructive",
       });
       return false;
@@ -64,7 +63,7 @@ const RecordingContainer = () => {
     resumeRecording,
     recordingStartTime,
   } = useRecording({
-    apiKey: API_KEYS[transcriptionService],
+    apiKey: localStorage.getItem(`${transcriptionService}_api_key`) || '',
     transcriptionService,
     minutes,
     onMinutesUpdate: setMinutes,
