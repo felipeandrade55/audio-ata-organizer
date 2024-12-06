@@ -22,6 +22,7 @@ export const useAudioRecording = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const audioPreprocessorRef = useRef<ReturnType<typeof createAudioPreprocessor> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const handleBackgroundNoise = useCallback((isNoisy: boolean) => {
     if (isNoisy) {
@@ -52,28 +53,56 @@ export const useAudioRecording = ({
       audioPreprocessorRef.current = createAudioPreprocessor();
       audioPreprocessorRef.current.setNoiseCallback(handleBackgroundNoise);
 
-      const constraints: MediaStreamConstraints = {
-        audio: {
-          sampleRate: 48000,
-          channelCount: 2,
-          ...(systemAudioEnabled && { systemAudio: 'include' as any })
-        }
-      };
+      // Inicializa o contexto de áudio
+      audioContextRef.current = new AudioContext();
+      const audioContext = audioContextRef.current;
 
-      const rawStream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      // Se o áudio do sistema estiver habilitado, tenta capturar o áudio do sistema
-      let systemAudioStream: MediaStream | null = null;
+      // Captura do microfone
+      const micStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        }
+      });
+
+      let finalStream: MediaStream;
+
       if (systemAudioEnabled) {
         try {
-          // @ts-ignore - TypeScript não reconhece essa API experimental
-          systemAudioStream = await navigator.mediaDevices.getDisplayMedia({
+          // Captura do áudio do sistema
+          const displayStream = await navigator.mediaDevices.getDisplayMedia({
             audio: {
               echoCancellation: true,
               noiseSuppression: true,
-              sampleRate: 48000,
+              autoGainControl: true,
             },
             video: false
+          });
+
+          // Cria os nós de áudio para mixagem
+          const micSource = audioContext.createMediaStreamSource(micStream);
+          const systemSource = audioContext.createMediaStreamSource(displayStream);
+          const destination = audioContext.createMediaStreamDestination();
+
+          // Cria ganhos para controlar os volumes
+          const micGain = audioContext.createGain();
+          const systemGain = audioContext.createGain();
+
+          // Ajusta os ganhos (pode ser ajustado conforme necessário)
+          micGain.gain.value = 0.7;
+          systemGain.gain.value = 0.3;
+
+          // Conecta os nós de áudio
+          micSource.connect(micGain).connect(destination);
+          systemSource.connect(systemGain).connect(destination);
+
+          finalStream = destination.stream;
+
+          toast({
+            title: "Áudio do Sistema",
+            description: "Áudio do sistema capturado com sucesso!",
+            duration: 3000,
           });
         } catch (error) {
           console.error('Erro ao capturar áudio do sistema:', error);
@@ -82,19 +111,10 @@ export const useAudioRecording = ({
             description: "Não foi possível capturar o áudio do sistema. Apenas o microfone será gravado.",
             duration: 5000,
           });
+          finalStream = micStream;
         }
-      }
-
-      let finalStream = rawStream;
-      if (systemAudioStream) {
-        const audioContext = new AudioContext();
-        const micSource = audioContext.createMediaStreamSource(rawStream);
-        const systemSource = audioContext.createMediaStreamSource(systemAudioStream);
-        const destination = audioContext.createMediaStreamDestination();
-
-        micSource.connect(destination);
-        systemSource.connect(destination);
-        finalStream = destination.stream;
+      } else {
+        finalStream = micStream;
       }
 
       const processedStream = await audioPreprocessorRef.current.processAudioStream(finalStream);
@@ -153,6 +173,10 @@ export const useAudioRecording = ({
       if (audioPreprocessorRef.current) {
         audioPreprocessorRef.current.dispose();
         audioPreprocessorRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
       }
       mediaRecorderRef.current = null;
       speechRecognitionRef.current = null;
