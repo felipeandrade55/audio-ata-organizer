@@ -48,12 +48,14 @@ serve(async (req) => {
             - Data: ${meetingContext.date}
             - Participantes: ${JSON.stringify(meetingContext.participants)}
             
-            Formate a saída em JSON com as seguintes chaves:
-            - summary: resumo detalhado
-            - sentimentAnalysis: array de objetos com análise de sentimentos
-            - keyMoments: array de momentos importantes
-            - concerns: array de preocupações
-            - engagementTopics: array de tópicos com maior engajamento`
+            Retorne apenas um objeto JSON com as seguintes chaves:
+            {
+              "summary": "resumo detalhado",
+              "sentimentAnalysis": [{"speaker": "nome", "sentiment": "positivo/neutro/negativo", "confidence": 0.9, "context": "trecho"}],
+              "keyMoments": [{"timestamp": "HH:MM:SS", "description": "descrição", "importance": "high/medium/low"}],
+              "concerns": ["preocupação 1", "preocupação 2"],
+              "engagementTopics": [{"topic": "tópico", "engagement": 0.9}]
+            }`
           },
           {
             role: 'user',
@@ -66,14 +68,23 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      const errorData = await response.text();
+      console.error('OpenAI API error response:', errorData);
       throw new Error(`OpenAI API error: ${response.statusText}`);
     }
 
     const data = await response.json();
     console.log('OpenAI response:', data);
     
-    const analysis = JSON.parse(data.choices[0].message.content);
-    console.log('Parsed analysis:', analysis);
+    let analysis;
+    try {
+      analysis = JSON.parse(data.choices[0].message.content);
+      console.log('Parsed analysis:', analysis);
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      console.log('Raw content:', data.choices[0].message.content);
+      throw new Error('Failed to parse OpenAI response');
+    }
 
     // Update transcription record with analysis
     const supabaseClient = createClient(
@@ -92,6 +103,7 @@ serve(async (req) => {
       .eq('id', transcriptionId);
 
     if (updateError) {
+      console.error('Error updating transcription:', updateError);
       throw updateError;
     }
 
@@ -112,6 +124,7 @@ serve(async (req) => {
         .eq('id', transcription.meeting_id);
 
       if (minutesError) {
+        console.error('Error updating meeting minutes:', minutesError);
         throw minutesError;
       }
     }
