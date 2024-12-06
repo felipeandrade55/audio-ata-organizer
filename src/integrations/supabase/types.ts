@@ -305,6 +305,44 @@ export type Database = {
           },
         ]
       }
+      meeting_recordings: {
+        Row: {
+          created_at: string
+          duration: string | null
+          file_path: string
+          id: string
+          meeting_id: string | null
+          size: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration?: string | null
+          file_path: string
+          id?: string
+          meeting_id?: string | null
+          size?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration?: string | null
+          file_path?: string
+          id?: string
+          meeting_id?: string | null
+          size?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_recordings_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_minutes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
