@@ -7,6 +7,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useSupabase } from "@/providers/SupabaseProvider";
@@ -53,25 +59,34 @@ export const SettingsMenu = () => {
   }, [user, toast]);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Settings className="h-5 w-5" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link to="/api-settings" className="w-full cursor-pointer">
-            Configurar APIs
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to="/billing" className="w-full cursor-pointer flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
-            Planos e Preços
-          </Link>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <TooltipProvider>
+      <Tooltip>
+        <DropdownMenu>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/api-settings" className="w-full cursor-pointer">
+                Configurar APIs
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/billing" className="w-full cursor-pointer flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Planos e Preços
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <TooltipContent>
+          <p>Configurações</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
