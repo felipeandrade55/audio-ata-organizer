@@ -7,6 +7,12 @@ import StartButton from "./StartButton";
 import ControlButtons from "./ControlButtons";
 import StopRecordingDialog from "./StopRecordingDialog";
 
+declare global {
+  interface Window {
+    systemAudioEnabled: boolean;
+  }
+}
+
 interface RecordingControlsProps {
   isRecording: boolean;
   isPaused: boolean;

@@ -12,6 +12,12 @@ import { useRecording } from "@/hooks/useRecording";
 import { useTranscriptionLimit } from "@/hooks/useTranscriptionLimit";
 import { MeetingMinutes } from "@/types/meeting";
 
+declare global {
+  interface Window {
+    systemAudioEnabled: boolean;
+  }
+}
+
 const RecordingContainer = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
