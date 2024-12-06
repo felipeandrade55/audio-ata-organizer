@@ -23,7 +23,6 @@ export const MeetingsList = ({ minutes }: MeetingsListProps) => {
   };
 
   const getProcessingStatus = (minute: MeetingMinutes) => {
-    // Check if there's a transcription history for this meeting
     const hasTranscription = minute.summary && minute.summary.length > 0;
     
     if (hasTranscription) {
@@ -43,20 +42,25 @@ export const MeetingsList = ({ minutes }: MeetingsListProps) => {
     );
   };
 
+  // Sort minutes by lastModified in descending order (newest first)
+  const sortedMinutes = [...minutes].sort((a, b) => {
+    return new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
+  });
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {minutes.map((minute) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {sortedMinutes.map((minute) => (
         <motion.div
           key={minute.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           whileHover={{ scale: 1.02 }}
-          className="cursor-pointer"
+          className="cursor-pointer w-full"
           onClick={() => handleMinuteClick(minute)}
         >
-          <Card className="p-4 hover:shadow-lg transition-shadow">
+          <Card className="p-4 hover:shadow-lg transition-shadow h-full">
             <div className="flex flex-col gap-2">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
                 {minute.meetingTitle}
               </h4>
               <p className="text-sm text-gray-500 dark:text-gray-400">

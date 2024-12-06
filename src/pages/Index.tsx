@@ -41,13 +41,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-gray-50 dark:from-gray-900 dark:to-emerald-900">
-      <div className="container mx-auto py-4 sm:py-8 px-3 sm:px-4">
+      <div className="w-full px-2 py-4 sm:px-4 sm:py-8">
         {user ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="space-y-4 sm:space-y-6"
+            className="space-y-4 sm:space-y-6 max-w-[1920px] mx-auto"
           >
             {/* Header Card */}
             <motion.div 

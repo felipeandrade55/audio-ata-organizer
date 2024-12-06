@@ -33,7 +33,7 @@ export const RecordingHistory = () => {
       const { data, error } = await supabase
         .from("transcription_history")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }); // Changed to false to show newest first
 
       if (error) throw error;
       setRecordings(data || []);
@@ -54,7 +54,6 @@ export const RecordingHistory = () => {
       title: "Processando",
       description: "Iniciando nova tentativa de transcrição...",
     });
-    // Implement retry logic here
   };
 
   const getAudioUrl = (path: string) => {
@@ -125,13 +124,13 @@ export const RecordingHistory = () => {
                 key={recording.id}
                 className="flex items-center justify-between p-4 rounded-lg border bg-card"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-grow">
                   <Checkbox
                     checked={selectedIds.includes(recording.id)}
                     onCheckedChange={() => handleSelectRecording(recording.id)}
                   />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium">
                         {formatDistanceToNow(new Date(recording.created_at), {
                           addSuffix: true,
@@ -141,10 +140,10 @@ export const RecordingHistory = () => {
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
                           recording.status === "error"
-                            ? "bg-red-100 text-red-800"
+                            ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200"
                             : recording.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200"
+                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200"
                         }`}
                       >
                         {recording.status === "error"
@@ -155,16 +154,16 @@ export const RecordingHistory = () => {
                       </span>
                     </div>
                     {recording.error_message && (
-                      <p className="text-sm text-red-600 mt-1">
+                      <p className="text-sm text-red-600 dark:text-red-400 mt-1 truncate">
                         {recording.error_message}
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 ml-4">
                   <audio
                     controls
-                    className="h-8"
+                    className="h-8 max-w-[200px] sm:max-w-none"
                     src={getAudioUrl(recording.audio_path)}
                   >
                     Seu navegador não suporta o elemento de áudio.
