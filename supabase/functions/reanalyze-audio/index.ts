@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { processAudioFile } from './audioProcessing.ts';
 import { analyzeTranscription } from './aiAnalysis.ts';
 import { updateDatabase } from './databaseOperations.ts';
-import { retry } from '../../src/utils/retryUtils.ts';
+import { retry } from './retryUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
