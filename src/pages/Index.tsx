@@ -14,7 +14,7 @@ import { useMeetings } from "@/hooks/useMeetings";
 const Index = () => {
   const { user } = useSupabase();
   const { toast } = useToast();
-  const { minutes } = useMeetings(user?.id);
+  const { data: minutes, isLoading, error } = useMeetings(user?.id || "");
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -120,7 +120,13 @@ const Index = () => {
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
                   Suas Atas
                 </h3>
-                <MeetingsList minutes={minutes} />
+                {isLoading ? (
+                  <div>Carregando...</div>
+                ) : error ? (
+                  <div>Erro ao carregar atas: {error.message}</div>
+                ) : (
+                  <MeetingsList minutes={minutes || []} />
+                )}
               </div>
             </div>
           </motion.div>

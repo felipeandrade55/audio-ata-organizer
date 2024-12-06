@@ -51,11 +51,11 @@ export const useMeetings = (userId: string) => {
         summary: meeting.summary,
         nextSteps: [], // Not in database schema
         author: meeting.author,
-        meetingType: meeting.meeting_type,
-        confidentialityLevel: meeting.confidentiality_level,
+        meetingType: meeting.meeting_type as MeetingMinutes['meetingType'], // Type assertion to match the enum
+        confidentialityLevel: meeting.confidentiality_level as MeetingMinutes['confidentialityLevel'],
         legalReferences: [], // Will be fetched separately if needed
         version: meeting.version,
-        status: meeting.status,
+        status: meeting.status as MeetingMinutes['status'],
         lastModified: meeting.last_modified,
         tags: [], // Not in database schema
         userId: meeting.user_id,
