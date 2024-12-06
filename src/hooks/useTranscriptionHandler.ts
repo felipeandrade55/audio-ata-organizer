@@ -91,12 +91,39 @@ export const useTranscriptionHandler = ({
       if (segments.length > 0 && minutes) {
         console.log('Processando segmentos da transcrição:', segments);
         
-        // Analyze transcription with OpenAI, passing the audio path
-        const analysis = await analyzeTranscription(segments, minutes, audioPath);
+        // First, save or update the meeting minutes
+        const { data: savedMinutes, error: minutesError } = await supabase
+          .from('meeting_minutes')
+          .upsert({
+            id: minutes.id,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            date: minutes.date,
+            start_time: minutes.startTime,
+            end_time: minutes.endTime,
+            location: minutes.location,
+            meeting_title: minutes.meetingTitle || 'Nova Reunião',
+            organizer: minutes.organizer,
+            summary: minutes.summary,
+            author: minutes.author,
+            meeting_type: minutes.meetingType,
+            confidentiality_level: minutes.confidentialityLevel,
+            version: minutes.version,
+            status: minutes.status,
+          })
+          .select()
+          .single();
+
+        if (minutesError) {
+          console.error('Error saving meeting minutes:', minutesError);
+          throw new Error('Failed to save meeting minutes');
+        }
+
+        // Now analyze transcription with OpenAI, using the confirmed meeting ID
+        const analysis = await analyzeTranscription(segments, savedMinutes, audioPath);
         
         if (analysis) {
           const updatedMinutes = {
-            ...minutes,
+            ...savedMinutes,
             summary: analysis.summary,
           };
           
