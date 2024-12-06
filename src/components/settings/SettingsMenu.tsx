@@ -64,7 +64,11 @@ export const SettingsMenu = () => {
         <DropdownMenu>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
                 <Settings className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
