@@ -2,12 +2,16 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: "todo" | "in_progress" | "review" | "done";
+  status: string;
   deadline?: string;
   priority?: string;
+  user_id?: string;
 }
 
 export interface Column {
   id: string;
   title: string;
+  column_type?: string;
+  order_index?: number;
+  user_id?: string;
 }
