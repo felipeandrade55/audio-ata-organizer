@@ -5,6 +5,7 @@ import { transcribeWithGoogleCloud } from "@/services/googleTranscriptionService
 import { TranscriptionSegment } from "@/types/transcription";
 import { findTriggers, updateMinutesWithTriggers } from "@/services/triggerService";
 import { MeetingMinutes } from "@/types/meeting";
+import { supabase } from "@/lib/supabase";
 
 interface TranscriptionHandlerProps {
   apiKey: string;
@@ -27,6 +28,47 @@ export const useTranscriptionHandler = ({
 }: TranscriptionHandlerProps) => {
   const { toast } = useToast();
   
+  const saveTranscriptionToHistory = async (audioBlob: Blob, transcriptionText: string, meetingId?: string) => {
+    try {
+      // Primeiro, salvamos o arquivo de áudio no bucket do Supabase
+      const audioFileName = `recording-${Date.now()}.wav`;
+      const { data: audioData, error: audioError } = await supabase.storage
+        .from('meeting_recordings')
+        .upload(audioFileName, audioBlob);
+
+      if (audioError) {
+        console.error('Erro ao salvar arquivo de áudio:', audioError);
+        throw audioError;
+      }
+
+      // Agora salvamos o registro na tabela transcription_history
+      const { data: transcriptionData, error: transcriptionError } = await supabase
+        .from('transcription_history')
+        .insert([
+          {
+            meeting_id: meetingId,
+            audio_path: audioFileName,
+            transcription_text: transcriptionText,
+            status: 'completed',
+            processed_at: new Date().toISOString()
+          }
+        ])
+        .select()
+        .single();
+
+      if (transcriptionError) {
+        console.error('Erro ao salvar transcrição:', transcriptionError);
+        throw transcriptionError;
+      }
+
+      console.log('Transcrição salva com sucesso:', transcriptionData);
+      return transcriptionData;
+    } catch (error) {
+      console.error('Erro ao salvar transcrição:', error);
+      throw error;
+    }
+  };
+
   const handleTranscription = useCallback(async (audioBlob: Blob) => {
     console.log('Iniciando transcrição do áudio');
     console.log('Serviço de transcrição:', transcriptionService);
@@ -34,7 +76,6 @@ export const useTranscriptionHandler = ({
     setIsTranscribing(true);
 
     try {
-      // Validação mais rigorosa da chave da API
       if (!apiKey || 
           apiKey.trim() === '' || 
           apiKey === 'your_openai_api_key_here' || 
@@ -85,6 +126,10 @@ export const useTranscriptionHandler = ({
       if (segments.length > 0) {
         console.log('Processando segmentos da transcrição:', segments);
         
+        // Salvar a transcrição no histórico
+        const transcriptionText = segments.map(s => `${s.speaker}: ${s.text}`).join('\n');
+        await saveTranscriptionToHistory(audioBlob, transcriptionText, minutes?.id);
+        
         if (minutes && onMinutesUpdate) {
           const updatedMinutes = await updateMinutesFromTranscription(minutes, segments);
           const minutesWithTriggers = updateMinutesWithTriggers(updatedMinutes, 
@@ -100,7 +145,7 @@ export const useTranscriptionHandler = ({
 
       toast({
         title: "Transcrição concluída",
-        description: "A transcrição foi processada com sucesso.",
+        description: "A transcrição foi processada e salva com sucesso.",
       });
     } catch (error) {
       console.error('Erro na transcrição:', error);
