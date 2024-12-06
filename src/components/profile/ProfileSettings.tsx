@@ -50,6 +50,23 @@ export const ProfileSettings = () => {
     }
   };
 
+  const createProfile = async (userId: string) => {
+    console.log('Creating new profile for user:', userId);
+    const { data: newProfile, error: createError } = await supabase
+      .from('profiles')
+      .insert([{ id: userId }])
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Error creating profile:', createError);
+      throw createError;
+    }
+
+    console.log('Created new profile:', newProfile);
+    return newProfile;
+  };
+
   const loadProfile = async () => {
     if (!user?.id) return;
 
@@ -59,37 +76,26 @@ export const ProfileSettings = () => {
         .from('profiles')
         .select('name, oab, avatar_url')
         .eq('id', user.id)
-        .single();
+        .maybeSingle(); // Using maybeSingle instead of single to handle non-existent profiles
 
       if (fetchError) {
-        console.log('Error fetching profile:', fetchError);
-        if (fetchError.code === 'PGRST116') {
-          // Profile doesn't exist, create it
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert([
-              { id: user.id }
-            ])
-            .select()
-            .single();
-
-          if (createError) throw createError;
-          
-          console.log('Created new profile:', newProfile);
-          setName("");
-          setOab("");
-          setAvatarUrl("");
-          return;
-        }
+        console.error('Error fetching profile:', fetchError);
         throw fetchError;
       }
 
-      if (existingProfile) {
-        console.log('Loaded existing profile:', existingProfile);
-        setName(existingProfile.name || "");
-        setOab(existingProfile.oab || "");
-        setAvatarUrl(existingProfile.avatar_url || "");
+      if (!existingProfile) {
+        console.log('Profile not found, creating new one');
+        await createProfile(user.id);
+        setName("");
+        setOab("");
+        setAvatarUrl("");
+        return;
       }
+
+      console.log('Loaded existing profile:', existingProfile);
+      setName(existingProfile.name || "");
+      setOab(existingProfile.oab || "");
+      setAvatarUrl(existingProfile.avatar_url || "");
     } catch (error: any) {
       console.error('Error in loadProfile:', error);
       toast({
