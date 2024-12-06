@@ -1,6 +1,6 @@
 import { useSupabase } from "@/providers/SupabaseProvider";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Mic, Calendar, Check } from "lucide-react";
+import { LogOut, User, Mic, Calendar, Settings, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import AuthForm from "@/components/auth/AuthForm";
@@ -25,7 +25,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-gray-50 dark:from-gray-900 dark:to-emerald-900">
       <div className="container mx-auto py-8 px-4">
         {user ? (
           <motion.div 
@@ -39,13 +39,13 @@ const Index = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-xl border border-green-100 dark:border-gray-700 overflow-hidden"
+              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-xl border border-emerald-100 dark:border-emerald-800 overflow-hidden"
             >
               {/* User Info Section */}
-              <div className="flex flex-col sm:flex-row justify-between items-center p-6 space-y-4 sm:space-y-0 border-b border-green-100 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row justify-between items-center p-6 space-y-4 sm:space-y-0 border-b border-emerald-100 dark:border-emerald-800">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-                    <User className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                    <User className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm text-gray-500 dark:text-gray-400">Bem-vindo(a)</span>
@@ -58,7 +58,7 @@ const Index = () => {
                     variant="outline" 
                     size="sm" 
                     onClick={handleLogout}
-                    className="border-green-200 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-gray-700"
+                    className="border-emerald-200 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-800"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
                     Sair
@@ -74,8 +74,8 @@ const Index = () => {
                   transition={{ duration: 0.5, delay: 0.2 }}
                   className="flex items-center gap-4 mb-6"
                 >
-                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-                    <Mic className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                    <Mic className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
@@ -91,6 +91,7 @@ const Index = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
+                  className="bg-gradient-to-br from-emerald-50/50 to-gray-50/50 dark:from-emerald-900/30 dark:to-gray-800/30 rounded-xl p-6 shadow-lg border border-emerald-100/50 dark:border-emerald-700/30"
                 >
                   <RecordingContainer />
                 </motion.div>
@@ -105,10 +106,10 @@ const Index = () => {
               </div>
 
               {/* Meetings Section */}
-              <div className="border-t border-green-100 dark:border-gray-700 p-6">
+              <div className="border-t border-emerald-100 dark:border-emerald-800 p-6">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-                    <Calendar className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                    <Calendar className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
@@ -124,10 +125,11 @@ const Index = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.5 }}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-gray-700"
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-emerald-100 dark:border-emerald-800"
                 >
                   {isLoading ? (
                     <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-4" />
                       Carregando suas atas...
                     </div>
                   ) : error ? (
@@ -170,7 +172,7 @@ const Index = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-xl border border-green-100 dark:border-gray-700 p-6"
+              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-xl border border-emerald-100 dark:border-emerald-800 p-6"
             >
               <AuthForm />
             </motion.div>
