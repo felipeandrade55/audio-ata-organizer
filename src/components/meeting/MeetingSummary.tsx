@@ -3,10 +3,10 @@ import { FileCheck } from "lucide-react";
 
 interface MeetingSummaryProps {
   summary: string;
-  nextSteps: string[];
+  nextSteps?: string[];
 }
 
-const MeetingSummary = ({ summary, nextSteps }: MeetingSummaryProps) => {
+const MeetingSummary = ({ summary, nextSteps = [] }: MeetingSummaryProps) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
