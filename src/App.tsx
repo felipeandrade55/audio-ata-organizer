@@ -6,6 +6,7 @@ import ApiSettings from "@/pages/ApiSettings";
 import TranscriptionDetail from "@/pages/TranscriptionDetail";
 import Billing from "@/pages/Billing";
 import Tasks from "@/pages/Tasks";
+import Calendar from "@/pages/Calendar";
 import { SupabaseProvider } from "@/providers/SupabaseProvider";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           <Route path="/transcription" element={<TranscriptionDetail />} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/tasks" element={<Tasks />} />
+          <Route path="/calendar" element={<Calendar />} />
         </Routes>
       </Router>
       <Toaster />
