@@ -14,6 +14,9 @@ serve(async (req) => {
 
   try {
     const { transcriptionId, transcriptionText, meetingContext } = await req.json();
+    console.log('Received request with:', { transcriptionId, meetingContext });
+    console.log('Transcription text sample:', transcriptionText.substring(0, 200) + '...');
+
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAIApiKey) {
@@ -21,10 +24,8 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Analyzing transcription:', { transcriptionId, meetingContext });
-    console.log('Transcription text sample:', transcriptionText.substring(0, 200) + '...');
-
-    // Analyze transcription with OpenAI
+    // Call OpenAI API
+    console.log('Calling OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -43,7 +44,7 @@ serve(async (req) => {
             3. Momentos-chave e decisões importantes, com seus respectivos timestamps
             4. Pontos de atenção ou preocupações levantadas
             5. Tópicos que geraram mais engajamento ou discussão
-            
+
             Retorne apenas um objeto JSON com as seguintes chaves:
             {
               "summary": "resumo detalhado",
@@ -66,22 +67,38 @@ serve(async (req) => {
     if (!response.ok) {
       const errorData = await response.text();
       console.error('OpenAI API error response:', errorData);
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorData}`);
     }
 
     const data = await response.json();
     console.log('OpenAI response:', data);
     
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('Invalid OpenAI response structure:', data);
+      throw new Error('Invalid OpenAI response structure');
+    }
+
     let analysis;
     try {
-      // Garantir que a resposta é um JSON válido
-      const content = data.choices[0].message.content.trim();
+      // Clean and parse the response
+      const content = data.choices[0].message.content
+        .trim()
+        .replace(/```json\n?|\n?```/g, ''); // Remove any markdown code blocks
+      console.log('Cleaned content:', content);
       analysis = JSON.parse(content);
       console.log('Parsed analysis:', analysis);
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
       console.log('Raw content:', data.choices[0].message.content);
       throw new Error('Failed to parse OpenAI response');
+    }
+
+    // Validate analysis structure
+    if (!analysis.summary || !Array.isArray(analysis.sentimentAnalysis) || 
+        !Array.isArray(analysis.keyMoments) || !Array.isArray(analysis.concerns) || 
+        !Array.isArray(analysis.engagementTopics)) {
+      console.error('Invalid analysis structure:', analysis);
+      throw new Error('Invalid analysis structure');
     }
 
     // Update transcription record with analysis
