@@ -4,6 +4,16 @@ import { Mic, Square, Pause, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import RecordingTimer from "./RecordingTimer";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -30,6 +40,7 @@ const RecordingControls = ({
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [noiseCheckInterval, setNoiseCheckInterval] = useState<number | null>(null);
+  const [showStopConfirmation, setShowStopConfirmation] = useState(false);
   const lastNoiseAlertRef = useRef<number>(0);
   const NOISE_ALERT_COOLDOWN = 10000; // 10 segundos entre alertas
   const { toast } = useToast();
@@ -99,6 +110,11 @@ const RecordingControls = ({
   };
 
   const handleStopRecording = async () => {
+    setShowStopConfirmation(true);
+  };
+
+  const confirmStopRecording = async () => {
+    setShowStopConfirmation(false);
     await onStopRecording();
     toast({
       title: "Transcrição em andamento",
@@ -107,82 +123,101 @@ const RecordingControls = ({
   };
 
   return (
-    <motion.div 
-      className="flex flex-col items-center gap-4"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="flex items-center gap-4">
-        {!isRecording ? (
-          <Button
-            onClick={onStartRecording}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-            size="lg"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            <motion.div
-              animate={{ scale: isHovered ? 1.1 : 1 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-2"
+    <>
+      <AlertDialog open={showStopConfirmation} onOpenChange={setShowStopConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Parar gravação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja parar a gravação? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmStopRecording}>
+              Sim, parar gravação
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <motion.div 
+        className="flex flex-col items-center gap-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="flex items-center gap-4">
+          {!isRecording ? (
+            <Button
+              onClick={onStartRecording}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+              size="lg"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
             >
-              <Mic className="w-5 h-5" />
-              <span>Iniciar Gravação</span>
-            </motion.div>
-          </Button>
-        ) : (
-          <div className="flex flex-col items-center gap-4">
-            <RecordingTimer
-              isRecording={isRecording}
-              isPaused={isPaused}
-              startTime={startTime}
-            />
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleStopRecording}
-                variant="destructive"
-                className="shadow-lg hover:shadow-xl transition-all duration-300"
-                size="lg"
+              <motion.div
+                animate={{ scale: isHovered ? 1.1 : 1 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-2"
               >
-                <Square className="w-5 h-5 mr-2" />
-                Parar
-              </Button>
-              
-              <Button
-                onClick={isPaused ? onResumeRecording : onPauseRecording}
-                variant="outline"
-                className="shadow-md hover:shadow-lg transition-all duration-300"
-                size="lg"
-              >
-                {isPaused ? (
-                  <>
-                    <Play className="w-5 h-5 mr-2" />
-                    Retomar
-                  </>
-                ) : (
-                  <>
-                    <Pause className="w-5 h-5 mr-2" />
-                    Pausar
-                  </>
-                )}
-              </Button>
+                <Mic className="w-5 h-5" />
+                <span>Iniciar Gravação</span>
+              </motion.div>
+            </Button>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <RecordingTimer
+                isRecording={isRecording}
+                isPaused={isPaused}
+                startTime={startTime}
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleStopRecording}
+                  variant="destructive"
+                  className="shadow-lg hover:shadow-xl transition-all duration-300"
+                  size="lg"
+                >
+                  <Square className="w-5 h-5 mr-2" />
+                  Parar
+                </Button>
+                
+                <Button
+                  onClick={isPaused ? onResumeRecording : onPauseRecording}
+                  variant="outline"
+                  className="shadow-md hover:shadow-lg transition-all duration-300"
+                  size="lg"
+                >
+                  {isPaused ? (
+                    <>
+                      <Play className="w-5 h-5 mr-2" />
+                      Retomar
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="w-5 h-5 mr-2" />
+                      Pausar
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
+        </div>
+        
+        {isTranscribing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-sm text-muted-foreground flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800"
+          >
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
+            <span>Transcrevendo áudio e gerando ATA com I.A...</span>
+          </motion.div>
         )}
-      </div>
-      
-      {isTranscribing && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-sm text-muted-foreground flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800"
-        >
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
-          <span>Transcrevendo áudio e gerando ATA com I.A...</span>
-        </motion.div>
-      )}
-    </motion.div>
+      </motion.div>
+    </>
   );
 };
 
