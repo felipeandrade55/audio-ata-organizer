@@ -27,20 +27,10 @@ export const setupSystemAudio = async (micStream: MediaStream, audioContext: Aud
 
     console.log('Solicitando permissão para captura de áudio do sistema...');
     
-    // Define as constraints com type assertion
+    // Simplificando as constraints para evitar erros
     const constraints = {
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        sampleRate: 44100,
-        autoGainControl: true,
-        suppressLocalAudioPlayback: false // Importante para Chrome
-      } as CustomAudioConstraints,
-      video: {
-        mandatory: {
-          chromeMediaSource: 'desktop'
-        }
-      }
+      audio: true,
+      video: true // Necessário para forçar a seleção de uma fonte desktop
     };
 
     // @ts-ignore - TypeScript não reconhece getDisplayMedia ainda
