@@ -9,9 +9,15 @@ interface UseAudioRecordingProps {
   onDataAvailable: (data: BlobPart) => void;
   transcriptionService: 'openai' | 'google';
   apiKey: string;
+  systemAudioEnabled?: boolean;
 }
 
-export const useAudioRecording = ({ onDataAvailable, transcriptionService, apiKey }: UseAudioRecordingProps) => {
+export const useAudioRecording = ({ 
+  onDataAvailable, 
+  transcriptionService, 
+  apiKey,
+  systemAudioEnabled = false
+}: UseAudioRecordingProps) => {
   const { toast } = useToast();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -46,14 +52,52 @@ export const useAudioRecording = ({ onDataAvailable, transcriptionService, apiKe
       audioPreprocessorRef.current = createAudioPreprocessor();
       audioPreprocessorRef.current.setNoiseCallback(handleBackgroundNoise);
 
-      const rawStream = await navigator.mediaDevices.getUserMedia({
+      const constraints: MediaStreamConstraints = {
         audio: {
           sampleRate: 48000,
           channelCount: 2,
+          ...(systemAudioEnabled && { systemAudio: 'include' as any })
         }
-      });
+      };
 
-      const processedStream = await audioPreprocessorRef.current.processAudioStream(rawStream);
+      const rawStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      // Se o áudio do sistema estiver habilitado, tenta capturar o áudio do sistema
+      let systemAudioStream: MediaStream | null = null;
+      if (systemAudioEnabled) {
+        try {
+          // @ts-ignore - TypeScript não reconhece essa API experimental
+          systemAudioStream = await navigator.mediaDevices.getDisplayMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              sampleRate: 48000,
+            },
+            video: false
+          });
+        } catch (error) {
+          console.error('Erro ao capturar áudio do sistema:', error);
+          toast({
+            title: "Aviso",
+            description: "Não foi possível capturar o áudio do sistema. Apenas o microfone será gravado.",
+            duration: 5000,
+          });
+        }
+      }
+
+      let finalStream = rawStream;
+      if (systemAudioStream) {
+        const audioContext = new AudioContext();
+        const micSource = audioContext.createMediaStreamSource(rawStream);
+        const systemSource = audioContext.createMediaStreamSource(systemAudioStream);
+        const destination = audioContext.createMediaStreamDestination();
+
+        micSource.connect(destination);
+        systemSource.connect(destination);
+        finalStream = destination.stream;
+      }
+
+      const processedStream = await audioPreprocessorRef.current.processAudioStream(finalStream);
       const recorder = new MediaRecorder(processedStream);
       const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
@@ -89,14 +133,15 @@ export const useAudioRecording = ({ onDataAvailable, transcriptionService, apiKe
 
       return { recorder, recognition };
     } catch (error) {
+      console.error('Erro ao iniciar gravação:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível acessar o microfone.",
+        description: "Não foi possível acessar o microfone ou o áudio do sistema.",
         variant: "destructive",
       });
       return null;
     }
-  }, [apiKey, transcriptionService, handleBackgroundNoise, onDataAvailable, toast]);
+  }, [apiKey, transcriptionService, handleBackgroundNoise, onDataAvailable, toast, systemAudioEnabled]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current) {

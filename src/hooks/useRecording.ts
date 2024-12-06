@@ -11,6 +11,7 @@ interface UseRecordingProps {
   minutes?: MeetingMinutes;
   onMinutesUpdate?: (minutes: MeetingMinutes) => void;
   beforeTranscriptionStart?: () => Promise<boolean>;
+  systemAudioEnabled?: boolean;
 }
 
 export const useRecording = ({ 
@@ -18,7 +19,8 @@ export const useRecording = ({
   transcriptionService, 
   minutes, 
   onMinutesUpdate,
-  beforeTranscriptionStart 
+  beforeTranscriptionStart,
+  systemAudioEnabled = false
 }: UseRecordingProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -51,6 +53,7 @@ export const useRecording = ({
     onDataAvailable: handleDataAvailable,
     transcriptionService,
     apiKey,
+    systemAudioEnabled
   });
 
   const startRecording = async (identificationEnabled: boolean) => {
@@ -75,7 +78,6 @@ export const useRecording = ({
     
     const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
     
-    // Check transcription limit before proceeding
     if (beforeTranscriptionStart) {
       const canProceed = await beforeTranscriptionStart();
       if (!canProceed) {

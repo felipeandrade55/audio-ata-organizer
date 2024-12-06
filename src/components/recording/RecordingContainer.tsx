@@ -6,6 +6,8 @@ import RecordingHeader from "./RecordingHeader";
 import RecordingConfig from "./RecordingConfig";
 import RecordingControls from "./RecordingControls";
 import TranscriptionSummary from "./TranscriptionSummary";
+import IdentificationSwitch from "./IdentificationSwitch";
+import SystemAudioSwitch from "./SystemAudioSwitch";
 import { useRecording } from "@/hooks/useRecording";
 import { useTranscriptionLimit } from "@/hooks/useTranscriptionLimit";
 import { MeetingMinutes } from "@/types/meeting";
@@ -15,6 +17,7 @@ const RecordingContainer = () => {
   const { toast } = useToast();
   const { checkTranscriptionLimit } = useTranscriptionLimit();
   const [identificationEnabled, setIdentificationEnabled] = useState(false);
+  const [systemAudioEnabled, setSystemAudioEnabled] = useState(false);
   const [transcriptionService, setTranscriptionService] = useState<'openai' | 'google'>('openai');
   const [minutes, setMinutes] = useState<MeetingMinutes>({
     id: crypto.randomUUID(),
@@ -67,7 +70,8 @@ const RecordingContainer = () => {
     transcriptionService,
     minutes,
     onMinutesUpdate: setMinutes,
-    beforeTranscriptionStart: checkTranscriptionLimit
+    beforeTranscriptionStart: checkTranscriptionLimit,
+    systemAudioEnabled
   });
 
   const formatDate = (date: Date) => {
@@ -113,6 +117,17 @@ const RecordingContainer = () => {
           <RecordingHeader date={formatDate(new Date())} />
           <CardContent>
             <div className="flex flex-col items-center gap-6">
+              <div className="w-full max-w-md space-y-4">
+                <IdentificationSwitch
+                  enabled={identificationEnabled}
+                  onToggle={setIdentificationEnabled}
+                />
+                <SystemAudioSwitch
+                  enabled={systemAudioEnabled}
+                  onToggle={setSystemAudioEnabled}
+                />
+              </div>
+
               <RecordingConfig
                 identificationEnabled={identificationEnabled}
                 transcriptionService={transcriptionService}
