@@ -1,19 +1,17 @@
 import { useSupabase } from "@/providers/SupabaseProvider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, User, Mic, Calendar, Search } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import AuthForm from "@/components/auth/AuthForm";
 import { motion } from "framer-motion";
 import RecordingContainer from "@/components/recording/RecordingContainer";
 import { ProfileSettings } from "@/components/profile/ProfileSettings";
-import { RecordingHistory } from "@/components/recording/RecordingHistory";
-import { MeetingsList } from "@/components/meeting/MeetingsList";
-import { useMeetings } from "@/hooks/useMeetings";
 import { SettingsMenu } from "@/components/settings/SettingsMenu";
 import { useState } from "react";
+import { useMeetings } from "@/hooks/useMeetings";
+import { RecordingHistorySection } from "@/components/history/RecordingHistorySection";
+import { MeetingHistorySection } from "@/components/history/MeetingHistorySection";
 
 const Index = () => {
   const { user } = useSupabase();
@@ -22,8 +20,8 @@ const Index = () => {
 
   // Filters state
   const [meetingSearch, setMeetingSearch] = useState("");
-  const [meetingType, setMeetingType] = useState<string>("");
-  const [recordingDateRange, setRecordingDateRange] = useState<string>("");
+  const [meetingType, setMeetingType] = useState<string>("all");
+  const [recordingDateRange, setRecordingDateRange] = useState<string>("all");
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -37,7 +35,7 @@ const Index = () => {
   const filteredMinutes = minutes?.filter(minute => {
     const matchesSearch = minute.meetingTitle.toLowerCase().includes(meetingSearch.toLowerCase()) ||
                          minute.summary?.toLowerCase().includes(meetingSearch.toLowerCase());
-    const matchesType = !meetingType || minute.meetingType === meetingType;
+    const matchesType = meetingType === 'all' || minute.meetingType === meetingType;
     return matchesSearch && matchesType;
   });
 
@@ -91,76 +89,21 @@ const Index = () => {
                 {/* History Sections Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Recording History Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        Histórico de Gravações
-                      </h3>
-                      <Select
-                        value={recordingDateRange}
-                        onValueChange={setRecordingDateRange}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Filtrar por período" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="today">Hoje</SelectItem>
-                          <SelectItem value="week">Última semana</SelectItem>
-                          <SelectItem value="month">Último mês</SelectItem>
-                          <SelectItem value="all">Todos</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <RecordingHistory />
-                  </div>
+                  <RecordingHistorySection
+                    recordingDateRange={recordingDateRange}
+                    setRecordingDateRange={setRecordingDateRange}
+                  />
 
                   {/* Meeting Minutes History Section */}
-                  <div className="space-y-4">
-                    <div className="flex flex-col space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                          Histórico de Atas
-                        </h3>
-                        <Select
-                          value={meetingType}
-                          onValueChange={setMeetingType}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Tipo de reunião" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">Todos</SelectItem>
-                            <SelectItem value="initial">Inicial</SelectItem>
-                            <SelectItem value="followup">Acompanhamento</SelectItem>
-                            <SelectItem value="review">Revisão</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                        <Input
-                          type="text"
-                          placeholder="Buscar por título ou conteúdo..."
-                          value={meetingSearch}
-                          onChange={(e) => setMeetingSearch(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                    
-                    {isLoading ? (
-                      <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600 mx-auto mb-3" />
-                        Carregando suas atas...
-                      </div>
-                    ) : error ? (
-                      <div className="p-6 text-center text-red-500">
-                        Erro ao carregar atas: {error.message}
-                      </div>
-                    ) : (
-                      <MeetingsList minutes={filteredMinutes || []} />
-                    )}
-                  </div>
+                  <MeetingHistorySection
+                    meetingSearch={meetingSearch}
+                    setMeetingSearch={setMeetingSearch}
+                    meetingType={meetingType}
+                    setMeetingType={setMeetingType}
+                    filteredMinutes={filteredMinutes || []}
+                    isLoading={isLoading}
+                    error={error}
+                  />
                 </div>
               </div>
             </motion.div>
