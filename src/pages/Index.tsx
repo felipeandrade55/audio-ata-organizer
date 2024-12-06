@@ -19,6 +19,10 @@ const Index = () => {
   const { user } = useSupabase();
   const { toast } = useToast();
   const { data: minutes, isLoading, error } = useMeetings(user?.id || "");
+  console.log("User ID:", user?.id);
+  console.log("Minutes data:", minutes);
+  console.log("Loading state:", isLoading);
+  console.log("Error state:", error);
 
   // Filters state
   const [meetingSearch, setMeetingSearch] = useState("");
@@ -102,11 +106,11 @@ const Index = () => {
                     <TabsTrigger value="history">Histórico</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="recording">
+                  <TabsContent value="recording" className="mt-0">
                     <RecordingContainer />
                   </TabsContent>
                   
-                  <TabsContent value="history">
+                  <TabsContent value="history" className="mt-0">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <RecordingHistorySection
                         recordingDateRange={recordingDateRange}
