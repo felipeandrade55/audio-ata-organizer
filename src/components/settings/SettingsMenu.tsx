@@ -10,10 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useSupabase } from "@/providers/SupabaseProvider";
+import { useToast } from "@/components/ui/use-toast";
 
 export const SettingsMenu = () => {
   const { user } = useSupabase();
   const [isAdmin, setIsAdmin] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -24,21 +26,31 @@ export const SettingsMenu = () => {
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching user role:', error);
+          toast({
+            title: "Erro ao verificar permissões",
+            description: "Não foi possível verificar suas permissões de administrador.",
+            variant: "destructive",
+          });
           return;
         }
 
         setIsAdmin(data?.role === 'admin');
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error in checkAdminStatus:', error);
+        toast({
+          title: "Erro ao verificar permissões",
+          description: error.message,
+          variant: "destructive",
+        });
       }
     };
 
     checkAdminStatus();
-  }, [user]);
+  }, [user, toast]);
 
   return (
     <DropdownMenu>

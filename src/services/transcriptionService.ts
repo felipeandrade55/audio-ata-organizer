@@ -1,14 +1,11 @@
 import { TranscriptionSegment } from "@/types/transcription";
-import { voiceIdentificationService } from "./voiceIdentificationService";
-import { handleNameRecognition } from "./nameRecognitionService";
 import { analyzeEmotions } from "./emotionDetectionService";
-import { MeetingMinutes } from "@/types/meeting";
-import { analyzeTranscription } from "./aiAnalysisService";
+import { supabase } from "@/lib/supabase";
 
 export const processTranscriptionResult = async (
-  result: any, 
-  audioBlob: Blob, 
-  apiKey: string
+  result: any,
+  audioBlob: Blob,
+  apiKey?: string
 ): Promise<TranscriptionSegment[]> => {
   console.log('Processando resultado da transcrição:', result);
   
@@ -16,23 +13,30 @@ export const processTranscriptionResult = async (
     throw new Error('API key não configurada. Por favor, configure sua chave API nas configurações.');
   }
 
+  // Validate API key format
+  if (typeof apiKey !== 'string' || !apiKey.startsWith('sk-')) {
+    throw new Error('Chave API inválida. Por favor, verifique suas configurações.');
+  }
+
   const segments = result.segments.map((segment: any) => {
     const audioFeatures = new Float32Array(segment.tokens.length);
     const timestamp = segment.start * 1000;
     
-    const recognizedName = handleNameRecognition(segment.text);
-    if (recognizedName) {
-      console.log('Nome reconhecido no segmento:', recognizedName);
-      voiceIdentificationService.addProfile(recognizedName, audioFeatures);
-    }
-    
-    const speaker = voiceIdentificationService.identifyMostSimilarSpeaker(audioFeatures, timestamp);
-    console.log('Falante identificado:', speaker);
-    
     return {
-      speaker,
+      id: `${timestamp}`,
+      start: segment.start,
+      end: segment.end,
       text: segment.text,
-      timestamp: new Date(timestamp).toISOString().substr(11, 8)
+      words: segment.tokens.map((token: any, index: number) => ({
+        text: token.text,
+        start: token.start,
+        end: token.end,
+        confidence: token.confidence,
+        audioFeature: audioFeatures[index]
+      })),
+      confidence: segment.confidence,
+      audioFeatures: Array.from(audioFeatures),
+      speaker: segment.speaker
     };
   });
 
@@ -54,8 +58,12 @@ export const processTranscriptionResult = async (
 
     console.log('Segmentos processados:', processedSegments);
     return processedSegments;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro na análise de emoções:', error);
+    if (error.status === 401) {
+      throw new Error('Chave API inválida ou expirada. Por favor, verifique suas configurações.');
+    }
+    // Return segments without emotions if emotion analysis fails
     return segments;
   }
 };
