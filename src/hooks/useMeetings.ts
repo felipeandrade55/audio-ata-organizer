@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import type { MeetingMinutes } from "@/types/meeting";
 
 export const useMeetings = (userId: string) => {
@@ -10,7 +10,23 @@ export const useMeetings = (userId: string) => {
     queryFn: async () => {
       const { data: meetingsData, error } = await supabase
         .from("meeting_minutes")
-        .select("*")
+        .select(`
+          id,
+          date,
+          start_time,
+          end_time,
+          location,
+          meeting_title,
+          organizer,
+          summary,
+          author,
+          meeting_type,
+          confidentiality_level,
+          version,
+          status,
+          last_modified,
+          user_id
+        `)
         .eq("user_id", userId);
 
       if (error) {
@@ -25,24 +41,23 @@ export const useMeetings = (userId: string) => {
         id: meeting.id,
         date: meeting.date,
         startTime: meeting.start_time,
-        endTime: meeting.end_time,
-        location: meeting.location,
+        endTime: meeting.end_time || '',
+        location: meeting.location || 'Virtual - Gravação de Áudio',
         meetingTitle: meeting.meeting_title,
-        organizer: meeting.organizer,
+        organizer: meeting.organizer || '',
         participants: [], // Will be fetched separately if needed
         agendaItems: [], // Will be fetched separately if needed
         actionItems: [], // Will be fetched separately if needed
-        summary: meeting.summary,
+        summary: meeting.summary || '',
         nextSteps: [], // Not in database schema
-        author: meeting.author,
-        meetingType: meeting.meeting_type as MeetingMinutes['meetingType'], // Type assertion to match the enum
-        confidentialityLevel: meeting.confidentiality_level as MeetingMinutes['confidentialityLevel'],
+        author: meeting.author || 'Sistema de Transcrição',
+        meetingType: (meeting.meeting_type as MeetingMinutes['meetingType']) || 'initial',
+        confidentialityLevel: (meeting.confidentiality_level as MeetingMinutes['confidentialityLevel']) || 'internal',
         legalReferences: [], // Will be fetched separately if needed
-        version: meeting.version,
-        status: meeting.status as MeetingMinutes['status'],
+        version: meeting.version || 1,
+        status: (meeting.status as MeetingMinutes['status']) || 'draft',
         lastModified: meeting.last_modified,
         tags: [], // Not in database schema
-        userId: meeting.user_id,
       }));
 
       console.log("Transformed data:", transformedData);

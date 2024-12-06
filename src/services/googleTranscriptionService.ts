@@ -31,11 +31,8 @@ export const transcribeWithGoogleCloud = async (
         languageCode: 'pt-BR',
         enableWordTimeOffsets: true,
         enableAutomaticPunctuation: true,
-        speakerDiarizationConfig: {
-          enableSpeakerDiarization: true,
-          minSpeakerCount: 1,
-          maxSpeakerCount: 2
-        },
+        enableSpeakerDiarization: true,
+        diarizationSpeakerCount: 2,
         model: 'default',
       },
       audio: {
@@ -92,8 +89,6 @@ export const transcribeWithGoogleCloud = async (
                 text: currentText.trim(),
                 start: segmentStart,
                 end: segmentEnd,
-                emotion: undefined,
-                triggers: undefined
               });
             }
             currentText = word.word;
@@ -113,8 +108,6 @@ export const transcribeWithGoogleCloud = async (
               text: currentText.trim(),
               start: segmentStart,
               end: segmentEnd,
-              emotion: undefined,
-              triggers: undefined
             });
           }
         });
@@ -126,8 +119,6 @@ export const transcribeWithGoogleCloud = async (
             text: result.alternatives[0].transcript.trim(),
             start: 0,
             end: 0,
-            emotion: undefined,
-            triggers: undefined
           });
         }
       });
