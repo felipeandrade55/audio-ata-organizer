@@ -433,9 +433,11 @@ export type Database = {
           created_at: string
           error_message: string | null
           id: string
+          key_moments: Json | null
           meeting_id: string | null
           processed_at: string | null
           retry_count: number | null
+          sentiment_analysis: Json | null
           status: string
           transcription_text: string | null
         }
@@ -444,9 +446,11 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          key_moments?: Json | null
           meeting_id?: string | null
           processed_at?: string | null
           retry_count?: number | null
+          sentiment_analysis?: Json | null
           status?: string
           transcription_text?: string | null
         }
@@ -455,9 +459,11 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          key_moments?: Json | null
           meeting_id?: string | null
           processed_at?: string | null
           retry_count?: number | null
+          sentiment_analysis?: Json | null
           status?: string
           transcription_text?: string | null
         }
