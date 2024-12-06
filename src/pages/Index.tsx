@@ -99,18 +99,18 @@ const Index = () => {
               </div>
 
               {/* Main Content */}
-              <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <div className="p-4 sm:p-6">
                 <Tabs defaultValue="recording" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="recording">Gravação</TabsTrigger>
                     <TabsTrigger value="history">Histórico</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="recording" className="mt-0">
+                  <TabsContent value="recording">
                     <RecordingContainer />
                   </TabsContent>
                   
-                  <TabsContent value="history" className="mt-0">
+                  <TabsContent value="history">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <RecordingHistorySection
                         recordingDateRange={recordingDateRange}
