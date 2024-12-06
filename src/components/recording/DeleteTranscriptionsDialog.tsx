@@ -31,12 +31,35 @@ export const DeleteTranscriptionsDialog = ({
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      const { error } = await supabase
+
+      // Primeiro, buscar os caminhos dos arquivos de áudio
+      const { data: transcriptions, error: fetchError } = await supabase
+        .from("transcription_history")
+        .select("audio_path")
+        .in("id", selectedIds);
+
+      if (fetchError) throw fetchError;
+
+      // Deletar os arquivos de áudio do storage
+      if (transcriptions && transcriptions.length > 0) {
+        const filePaths = transcriptions.map(t => t.audio_path);
+        const { error: storageError } = await supabase.storage
+          .from("meeting_recordings")
+          .remove(filePaths);
+
+        if (storageError) {
+          console.error("Erro ao deletar arquivos:", storageError);
+          toast.error("Erro ao deletar alguns arquivos de áudio");
+        }
+      }
+
+      // Deletar os registros da tabela transcription_history
+      const { error: deleteError } = await supabase
         .from("transcription_history")
         .delete()
         .in("id", selectedIds);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
       toast.success(
         `${selectedIds.length} ${
@@ -79,7 +102,7 @@ export const DeleteTranscriptionsDialog = ({
                 {selectedIds.length === 1
                   ? "1 registro"
                   : `${selectedIds.length} registros`}{" "}
-                do histórico de transcrições.
+                do histórico de transcrições e seus arquivos de áudio correspondentes.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
