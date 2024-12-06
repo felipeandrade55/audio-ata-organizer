@@ -30,6 +30,14 @@ export const useTranscriptionHandler = ({
   
   const saveTranscriptionToHistory = async (audioBlob: Blob, transcriptionText: string, meetingId?: string) => {
     try {
+      // Verificar se o usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      console.log('Salvando transcrição para usuário:', user.id);
+
       // Primeiro, salvamos o arquivo de áudio no bucket do Supabase
       const audioFileName = `recording-${Date.now()}.wav`;
       const { data: audioData, error: audioError } = await supabase.storage
@@ -40,6 +48,8 @@ export const useTranscriptionHandler = ({
         console.error('Erro ao salvar arquivo de áudio:', audioError);
         throw audioError;
       }
+
+      console.log('Áudio salvo com sucesso:', audioFileName);
 
       // Agora salvamos o registro na tabela transcription_history
       const { data: transcriptionData, error: transcriptionError } = await supabase
