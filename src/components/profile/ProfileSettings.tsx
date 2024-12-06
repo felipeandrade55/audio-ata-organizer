@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { UserCog } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -13,7 +14,10 @@ export const ProfileSettings = () => {
   const { user } = useSupabase();
   const { toast } = useToast();
   const [name, setName] = useState("");
-  const [oab, setOab] = useState("");
+  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
+  const [role, setRole] = useState("");
+  const [bio, setBio] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>("");
@@ -74,9 +78,9 @@ export const ProfileSettings = () => {
       console.log('Loading profile for user:', user.id);
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
-        .select('name, oab, avatar_url')
+        .select('name, phone, company, role, bio, avatar_url')
         .eq('id', user.id)
-        .maybeSingle(); // Using maybeSingle instead of single to handle non-existent profiles
+        .maybeSingle();
 
       if (fetchError) {
         console.error('Error fetching profile:', fetchError);
@@ -87,14 +91,20 @@ export const ProfileSettings = () => {
         console.log('Profile not found, creating new one');
         await createProfile(user.id);
         setName("");
-        setOab("");
+        setPhone("");
+        setCompany("");
+        setRole("");
+        setBio("");
         setAvatarUrl("");
         return;
       }
 
       console.log('Loaded existing profile:', existingProfile);
       setName(existingProfile.name || "");
-      setOab(existingProfile.oab || "");
+      setPhone(existingProfile.phone || "");
+      setCompany(existingProfile.company || "");
+      setRole(existingProfile.role || "");
+      setBio(existingProfile.bio || "");
       setAvatarUrl(existingProfile.avatar_url || "");
     } catch (error: any) {
       console.error('Error in loadProfile:', error);
@@ -119,7 +129,10 @@ export const ProfileSettings = () => {
         .upsert({
           id: user.id,
           name,
-          oab,
+          phone,
+          company,
+          role,
+          bio,
           avatar_url: avatarUrl || undefined,
           updated_at: new Date().toISOString(),
         });
@@ -173,12 +186,41 @@ export const ProfileSettings = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="oab">Número da OAB</Label>
+            <Label htmlFor="phone">Telefone</Label>
             <Input
-              id="oab"
-              value={oab}
-              onChange={(e) => setOab(e.target.value)}
-              placeholder="Seu número da OAB"
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Seu número de telefone"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="company">Empresa/Escritório</Label>
+            <Input
+              id="company"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="Nome da sua empresa ou escritório"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">Cargo</Label>
+            <Input
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              placeholder="Seu cargo ou função"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="bio">Biografia</Label>
+            <Textarea
+              id="bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Uma breve descrição sobre você"
+              className="resize-none"
+              rows={3}
             />
           </div>
           <Button
