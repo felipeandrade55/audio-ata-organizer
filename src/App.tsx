@@ -4,6 +4,7 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import Index from "@/pages/Index";
 import ApiSettings from "@/pages/ApiSettings";
 import TranscriptionDetail from "@/pages/TranscriptionDetail";
+import Billing from "@/pages/Billing";
 import { SupabaseProvider } from "@/providers/SupabaseProvider";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/api-settings" element={<ApiSettings />} />
           <Route path="/transcription" element={<TranscriptionDetail />} />
+          <Route path="/billing" element={<Billing />} />
         </Routes>
       </Router>
       <Toaster />

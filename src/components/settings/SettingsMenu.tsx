@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Settings } from "lucide-react";
+import { Settings, DollarSign } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +63,12 @@ export const SettingsMenu = () => {
         <DropdownMenuItem asChild>
           <Link to="/api-settings" className="w-full cursor-pointer">
             Configurar APIs
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/billing" className="w-full cursor-pointer flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Planos e Preços
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
