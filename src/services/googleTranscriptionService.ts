@@ -42,7 +42,8 @@ export const transcribeWithGoogleCloud = async (
 
     console.log("Configuração da requisição:", JSON.stringify(requestBody.config, null, 2));
 
-    const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
+    // Changed the endpoint from v1 to v1p1beta1
+    const response = await fetch(`https://speech.googleapis.com/v1p1beta1/speech:recognize?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
