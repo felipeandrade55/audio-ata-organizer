@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DeleteTranscriptionsDialog } from "./DeleteTranscriptionsDialog";
 
 interface TranscriptionRecord {
   id: string;
@@ -19,6 +21,7 @@ interface TranscriptionRecord {
 export const RecordingHistory = () => {
   const [recordings, setRecordings] = useState<TranscriptionRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,6 +61,22 @@ export const RecordingHistory = () => {
     return `${supabase.storage.from("meeting_recordings").getPublicUrl(path).data.publicUrl}`;
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.length === recordings.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(recordings.map((rec) => rec.id));
+    }
+  };
+
+  const handleSelectRecording = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((selectedId) => selectedId !== id)
+        : [...prev, id]
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -68,8 +87,31 @@ export const RecordingHistory = () => {
 
   return (
     <Card className="mt-6">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Histórico de Gravações</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-lg font-semibold">
+          Histórico de Gravações
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          {recordings.length > 0 && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSelectAll}
+                className="text-sm"
+              >
+                {selectedIds.length === recordings.length
+                  ? "Desmarcar Todos"
+                  : "Selecionar Todos"}
+              </Button>
+              <DeleteTranscriptionsDialog
+                selectedIds={selectedIds}
+                onDeleteComplete={fetchRecordings}
+                onClearSelection={() => setSelectedIds([])}
+              />
+            </>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -83,35 +125,41 @@ export const RecordingHistory = () => {
                 key={recording.id}
                 className="flex items-center justify-between p-4 rounded-lg border bg-card"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">
-                      {formatDistanceToNow(new Date(recording.created_at), {
-                        addSuffix: true,
-                        locale: ptBR,
-                      })}
-                    </span>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        recording.status === "error"
-                          ? "bg-red-100 text-red-800"
+                <div className="flex items-center gap-4">
+                  <Checkbox
+                    checked={selectedIds.includes(recording.id)}
+                    onCheckedChange={() => handleSelectRecording(recording.id)}
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {formatDistanceToNow(new Date(recording.created_at), {
+                          addSuffix: true,
+                          locale: ptBR,
+                        })}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          recording.status === "error"
+                            ? "bg-red-100 text-red-800"
+                            : recording.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {recording.status === "error"
+                          ? "Erro"
                           : recording.status === "completed"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {recording.status === "error"
-                        ? "Erro"
-                        : recording.status === "completed"
-                        ? "Concluído"
-                        : "Processando"}
-                    </span>
+                          ? "Concluído"
+                          : "Processando"}
+                      </span>
+                    </div>
+                    {recording.error_message && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {recording.error_message}
+                      </p>
+                    )}
                   </div>
-                  {recording.error_message && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {recording.error_message}
-                    </p>
-                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <audio
