@@ -1,10 +1,13 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Star, Info } from "lucide-react";
+import { DollarSign, Star, Info, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
 
 const Billing = () => {
+  const navigate = useNavigate();
+  
   const plans = [
     {
       name: "Starter",
@@ -58,6 +61,16 @@ const Billing = () => {
           transition={{ duration: 0.5 }}
           className="space-y-6"
         >
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            className="mb-4 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+
           {/* Beta Alert */}
           <Alert className="bg-emerald-100/80 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800">
             <Info className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
