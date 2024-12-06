@@ -1,20 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Mic, Square, Pause, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import RecordingTimer from "./RecordingTimer";
 import AudioWaveform from "./AudioWaveform";
 import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import StartButton from "./StartButton";
+import ControlButtons from "./ControlButtons";
+import StopRecordingDialog from "./StopRecordingDialog";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -37,26 +28,22 @@ const RecordingControls = ({
   onPauseRecording,
   onResumeRecording,
 }: RecordingControlsProps) => {
-  const [isHovered, setIsHovered] = useState(false);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
-  const [noiseCheckInterval, setNoiseCheckInterval] = useState<number | null>(null);
   const [showStopConfirmation, setShowStopConfirmation] = useState(false);
-  const lastNoiseAlertRef = useRef<number>(0);
-  const NOISE_ALERT_COOLDOWN = 10000;
   const { toast } = useToast();
 
   useEffect(() => {
     if (isRecording && !isPaused) {
-      setupNoiseDetection();
+      setupAudioContext();
     } else {
-      cleanupNoiseDetection();
+      cleanupAudioContext();
     }
 
-    return () => cleanupNoiseDetection();
+    return () => cleanupAudioContext();
   }, [isRecording, isPaused]);
 
-  const setupNoiseDetection = async () => {
+  const setupAudioContext = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const context = new AudioContext();
@@ -68,41 +55,12 @@ const RecordingControls = ({
       
       setAudioContext(context);
       setAnalyser(analyserNode);
-
-      const intervalId = window.setInterval(() => {
-        if (isRecording && !isPaused) {
-          checkNoiseLevel(analyserNode);
-        }
-      }, 2000);
-
-      setNoiseCheckInterval(intervalId);
     } catch (error) {
-      console.error("Erro ao configurar detecção de ruído:", error);
+      console.error("Erro ao configurar contexto de áudio:", error);
     }
   };
 
-  const checkNoiseLevel = (analyserNode: AnalyserNode) => {
-    const dataArray = new Float32Array(analyserNode.frequencyBinCount);
-    analyserNode.getFloatFrequencyData(dataArray);
-
-    const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-    const now = Date.now();
-    
-    if (average > -50 && isRecording && !isPaused && now - lastNoiseAlertRef.current > NOISE_ALERT_COOLDOWN) {
-      lastNoiseAlertRef.current = now;
-      toast({
-        title: "Dica para melhor qualidade",
-        description: "Detectamos alguns ruídos de fundo. Para uma transcrição mais precisa, que tal procurar um ambiente mais silencioso? 🎯",
-        duration: 5000,
-      });
-    }
-  };
-
-  const cleanupNoiseDetection = () => {
-    if (noiseCheckInterval) {
-      clearInterval(noiseCheckInterval);
-      setNoiseCheckInterval(null);
-    }
+  const cleanupAudioContext = () => {
     if (audioContext) {
       audioContext.close();
       setAudioContext(null);
@@ -110,7 +68,7 @@ const RecordingControls = ({
     setAnalyser(null);
   };
 
-  const handleStopRecording = async () => {
+  const handleStopRecording = () => {
     setShowStopConfirmation(true);
   };
 
@@ -125,22 +83,11 @@ const RecordingControls = ({
 
   return (
     <>
-      <AlertDialog open={showStopConfirmation} onOpenChange={setShowStopConfirmation}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Parar gravação?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja parar a gravação? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmStopRecording}>
-              Sim, parar gravação
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <StopRecordingDialog 
+        open={showStopConfirmation} 
+        onOpenChange={setShowStopConfirmation}
+        onConfirm={confirmStopRecording}
+      />
 
       <motion.div 
         className="flex flex-col items-center gap-4"
@@ -160,22 +107,7 @@ const RecordingControls = ({
           
           <div className="flex items-center gap-4">
             {!isRecording ? (
-              <Button
-                onClick={onStartRecording}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                size="lg"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-              >
-                <motion.div
-                  animate={{ scale: isHovered ? 1.1 : 1 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-center gap-2"
-                >
-                  <Mic className="w-5 h-5" />
-                  <span>Iniciar Gravação</span>
-                </motion.div>
-              </Button>
+              <StartButton onStartRecording={onStartRecording} />
             ) : (
               <div className="flex flex-col items-center gap-4">
                 <RecordingTimer
@@ -183,36 +115,12 @@ const RecordingControls = ({
                   isPaused={isPaused}
                   startTime={startTime}
                 />
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={handleStopRecording}
-                    variant="destructive"
-                    className="shadow-lg hover:shadow-xl transition-all duration-300"
-                    size="lg"
-                  >
-                    <Square className="w-5 h-5 mr-2" />
-                    Parar
-                  </Button>
-                  
-                  <Button
-                    onClick={isPaused ? onResumeRecording : onPauseRecording}
-                    variant="outline"
-                    className="shadow-md hover:shadow-lg transition-all duration-300"
-                    size="lg"
-                  >
-                    {isPaused ? (
-                      <>
-                        <Play className="w-5 h-5 mr-2" />
-                        Retomar
-                      </>
-                    ) : (
-                      <>
-                        <Pause className="w-5 h-5 mr-2" />
-                        Pausar
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <ControlButtons 
+                  isPaused={isPaused}
+                  onStopClick={handleStopRecording}
+                  onPauseClick={onPauseRecording}
+                  onResumeClick={onResumeRecording}
+                />
               </div>
             )}
           </div>
