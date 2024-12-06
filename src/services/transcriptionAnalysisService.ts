@@ -25,12 +25,18 @@ interface AnalysisResult {
 export const analyzeTranscription = async (
   segments: TranscriptionSegment[],
   minutes: MeetingMinutes,
-  audioPath?: string // Add audioPath parameter
+  audioPath?: string
 ): Promise<AnalysisResult | null> => {
   try {
     console.log('Starting transcription analysis with audio path:', audioPath);
-    const transcriptionText = segments.map(s => `${s.speaker}: ${s.text}`).join('\n');
     
+    // Format transcription text with timestamps and speakers
+    const transcriptionText = segments
+      .map(s => `[${s.timestamp}] ${s.speaker}: ${s.text}`)
+      .join('\n');
+    
+    console.log('Formatted transcription text:', transcriptionText);
+
     if (!audioPath) {
       console.error('No audio path provided for transcription analysis');
       throw new Error('Audio path is required for transcription analysis');
@@ -43,7 +49,7 @@ export const analyzeTranscription = async (
         meeting_id: minutes.id,
         transcription_text: transcriptionText,
         status: 'processing',
-        audio_path: audioPath // Include the audio path
+        audio_path: audioPath
       })
       .select()
       .single();
@@ -54,22 +60,27 @@ export const analyzeTranscription = async (
     }
 
     // Call edge function to analyze transcription
-    const response = await fetch('/api/analyze-transcription', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        transcriptionId: transcriptionRecord.id,
-        transcriptionText
-      }),
-    });
+    const { data: analysisData, error: analysisError } = await supabase.functions
+      .invoke('analyze-transcription', {
+        body: {
+          transcriptionId: transcriptionRecord.id,
+          transcriptionText,
+          meetingContext: {
+            title: minutes.meetingTitle,
+            date: minutes.date,
+            participants: minutes.participants,
+          }
+        }
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to analyze transcription');
+    if (analysisError) {
+      console.error('Error calling analyze-transcription function:', analysisError);
+      throw analysisError;
     }
 
-    return await response.json();
+    console.log('Analysis result:', analysisData);
+
+    return analysisData;
   } catch (error) {
     console.error('Error in transcription analysis:', error);
     return null;

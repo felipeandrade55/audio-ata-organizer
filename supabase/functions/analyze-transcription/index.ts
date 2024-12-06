@@ -13,12 +13,15 @@ serve(async (req) => {
   }
 
   try {
-    const { transcriptionId, transcriptionText } = await req.json();
+    const { transcriptionId, transcriptionText, meetingContext } = await req.json();
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
+
+    console.log('Analyzing transcription:', { transcriptionId, meetingContext });
+    console.log('Transcription text sample:', transcriptionText.substring(0, 200) + '...');
 
     // Analyze transcription with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -34,11 +37,16 @@ serve(async (req) => {
             role: 'system',
             content: `Você é um assistente especializado em análise de transcrições de reuniões.
             Analise a transcrição fornecida e gere:
-            1. Um resumo detalhado e estruturado da reunião
-            2. Análise de sentimentos dos participantes
-            3. Momentos-chave e decisões importantes
+            1. Um resumo detalhado e estruturado da reunião, focando nos principais pontos discutidos
+            2. Análise de sentimentos dos participantes durante a discussão
+            3. Momentos-chave e decisões importantes, com seus respectivos timestamps
             4. Pontos de atenção ou preocupações levantadas
             5. Tópicos que geraram mais engajamento ou discussão
+            
+            Contexto da reunião:
+            - Título: ${meetingContext.title}
+            - Data: ${meetingContext.date}
+            - Participantes: ${JSON.stringify(meetingContext.participants)}
             
             Formate a saída em JSON com as seguintes chaves:
             - summary: resumo detalhado
@@ -62,7 +70,10 @@ serve(async (req) => {
     }
 
     const data = await response.json();
+    console.log('OpenAI response:', data);
+    
     const analysis = JSON.parse(data.choices[0].message.content);
+    console.log('Parsed analysis:', analysis);
 
     // Update transcription record with analysis
     const supabaseClient = createClient(
@@ -76,6 +87,7 @@ serve(async (req) => {
         sentiment_analysis: analysis.sentimentAnalysis,
         key_moments: analysis.keyMoments,
         processed_at: new Date().toISOString(),
+        status: 'completed'
       })
       .eq('id', transcriptionId);
 
@@ -95,6 +107,7 @@ serve(async (req) => {
         .from('meeting_minutes')
         .update({
           summary: analysis.summary,
+          last_modified: new Date().toISOString()
         })
         .eq('id', transcription.meeting_id);
 
