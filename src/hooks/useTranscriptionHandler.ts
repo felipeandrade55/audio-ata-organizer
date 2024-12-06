@@ -1,11 +1,12 @@
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { processTranscriptionResult, updateMinutesFromTranscription } from "@/services/transcriptionService";
+import { processTranscriptionResult } from "@/services/transcriptionService";
 import { transcribeWithGoogleCloud } from "@/services/googleTranscriptionService";
 import { TranscriptionSegment } from "@/types/transcription";
 import { findTriggers, updateMinutesWithTriggers } from "@/services/triggerService";
 import { MeetingMinutes } from "@/types/meeting";
 import { supabase } from "@/lib/supabase";
+import { saveAudioToStorage, saveTranscriptionRecord } from "@/services/supabaseStorageService";
 
 interface TranscriptionHandlerProps {
   apiKey: string;
@@ -58,63 +59,9 @@ export const useTranscriptionHandler = ({
       throw error;
     }
   };
-  
-  const saveTranscriptionToHistory = async (audioBlob: Blob, transcriptionText: string, meetingId?: string) => {
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        console.error('Erro de autenticação:', sessionError);
-        throw new Error('Usuário não autenticado. Por favor, faça login.');
-      }
-
-      console.log('Salvando transcrição para usuário:', session.user.id);
-
-      const audioBlobCopy = audioBlob.slice(0, audioBlob.size);
-      const audioFileName = `recording-${Date.now()}.wav`;
-      
-      const { data: audioData, error: audioError } = await supabase.storage
-        .from('meeting_recordings')
-        .upload(audioFileName, audioBlobCopy);
-
-      if (audioError) {
-        console.error('Erro ao salvar arquivo de áudio:', audioError);
-        throw audioError;
-      }
-
-      console.log('Áudio salvo com sucesso:', audioFileName);
-
-      const { data: transcriptionData, error: transcriptionError } = await supabase
-        .from('transcription_history')
-        .insert([
-          {
-            meeting_id: meetingId,
-            audio_path: audioFileName,
-            transcription_text: transcriptionText,
-            status: 'completed',
-            processed_at: new Date().toISOString()
-          }
-        ])
-        .select()
-        .single();
-
-      if (transcriptionError) {
-        console.error('Erro ao salvar transcrição:', transcriptionError);
-        throw transcriptionError;
-      }
-
-      console.log('Transcrição salva com sucesso:', transcriptionData);
-      return transcriptionData;
-    } catch (error) {
-      console.error('Erro ao salvar transcrição:', error);
-      throw error;
-    }
-  };
 
   const handleTranscription = useCallback(async (audioBlob: Blob) => {
     console.log('Iniciando transcrição do áudio');
-    console.log('Serviço de transcrição:', transcriptionService);
-    
     setIsTranscribing(true);
 
     try {
@@ -127,8 +74,6 @@ export const useTranscriptionHandler = ({
       }
 
       const cleanApiKey = apiKey.trim();
-      console.log(`Usando chave ${transcriptionService} com comprimento:`, cleanApiKey.length);
-
       let segments: TranscriptionSegment[];
 
       if (transcriptionService === 'google') {
@@ -170,7 +115,6 @@ export const useTranscriptionHandler = ({
         
         let meetingMinutes = minutes;
         if (!meetingMinutes) {
-          // Create new meeting minutes if none exist
           meetingMinutes = {
             id: crypto.randomUUID(),
             date: new Date().toLocaleDateString('pt-BR'),
@@ -195,21 +139,14 @@ export const useTranscriptionHandler = ({
           };
         }
 
-        // Save or update meeting minutes first
         const savedMinutes = await createOrUpdateMeetingMinutes(meetingMinutes);
         console.log('Ata salva/atualizada:', savedMinutes);
         
-        // Create a copy of the blob for the history
-        const audioBlobCopy = audioBlob.slice(0, audioBlob.size);
-        const transcriptionText = segments.map(s => `${s.speaker}: ${s.text}`).join('\n');
+        const audioFileName = `recording-${Date.now()}.wav`;
+        await saveAudioToStorage(audioBlob, audioFileName);
         
-        try {
-          await saveTranscriptionToHistory(audioBlobCopy, transcriptionText, savedMinutes.id);
-          console.log('Transcrição salva no histórico com sucesso');
-        } catch (error) {
-          console.error('Erro ao salvar no histórico:', error);
-          // Continue even if history save fails
-        }
+        const transcriptionText = segments.map(s => `${s.speaker}: ${s.text}`).join('\n');
+        await saveTranscriptionRecord(savedMinutes.id, audioFileName, transcriptionText);
         
         if (onMinutesUpdate) {
           const updatedMinutes = await updateMinutesFromTranscription(meetingMinutes, segments);
@@ -218,7 +155,6 @@ export const useTranscriptionHandler = ({
           );
           
           onMinutesUpdate(minutesWithTriggers);
-          console.log('Ata atualizada com sucesso');
         }
       }
       
