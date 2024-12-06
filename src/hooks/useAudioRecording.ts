@@ -2,8 +2,10 @@ import { useCallback, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { createAudioPreprocessor } from "@/services/audio";
 import { voiceIdentificationService } from "@/services/voiceIdentificationService";
-import { handleNameRecognition } from "@/services/nameRecognitionService";
 import { playIdentificationPrompt } from "@/services/audioService";
+import { setupSystemAudio } from "@/services/audio/systemAudioService";
+import { setupSpeechRecognition } from "@/services/audio/speechRecognitionService";
+import { validateApiKey, setupMicrophoneStream } from "@/services/audio/recordingSetupService";
 
 interface UseAudioRecordingProps {
   onDataAvailable: (data: BlobPart) => void;
@@ -23,6 +25,7 @@ export const useAudioRecording = ({
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const audioPreprocessorRef = useRef<ReturnType<typeof createAudioPreprocessor> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   const handleBackgroundNoise = useCallback((isNoisy: boolean) => {
     if (isNoisy) {
@@ -35,14 +38,7 @@ export const useAudioRecording = ({
   }, [toast]);
 
   const startRecording = useCallback(async (identificationEnabled: boolean) => {
-    if (!apiKey) {
-      toast({
-        title: "Erro",
-        description: `Por favor, configure sua chave da API ${transcriptionService === 'openai' ? 'OpenAI' : 'Google Cloud'} nas variáveis de ambiente.`,
-        variant: "destructive",
-      });
-      return null;
-    }
+    if (!validateApiKey(apiKey, transcriptionService)) return null;
 
     try {
       if (identificationEnabled) {
@@ -52,66 +48,16 @@ export const useAudioRecording = ({
 
       audioPreprocessorRef.current = createAudioPreprocessor();
       audioPreprocessorRef.current.setNoiseCallback(handleBackgroundNoise);
-
-      // Inicializa o contexto de áudio
       audioContextRef.current = new AudioContext();
-      const audioContext = audioContextRef.current;
 
-      // Captura do microfone
-      const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        }
-      });
-
+      const micStream = await setupMicrophoneStream();
       let finalStream: MediaStream;
 
       if (systemAudioEnabled) {
-        try {
-          // Captura do áudio do sistema
-          const displayStream = await navigator.mediaDevices.getDisplayMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            },
-            video: false
-          });
-
-          // Cria os nós de áudio para mixagem
-          const micSource = audioContext.createMediaStreamSource(micStream);
-          const systemSource = audioContext.createMediaStreamSource(displayStream);
-          const destination = audioContext.createMediaStreamDestination();
-
-          // Cria ganhos para controlar os volumes
-          const micGain = audioContext.createGain();
-          const systemGain = audioContext.createGain();
-
-          // Ajusta os ganhos (pode ser ajustado conforme necessário)
-          micGain.gain.value = 0.7;
-          systemGain.gain.value = 0.3;
-
-          // Conecta os nós de áudio
-          micSource.connect(micGain).connect(destination);
-          systemSource.connect(systemGain).connect(destination);
-
-          finalStream = destination.stream;
-
-          toast({
-            title: "Áudio do Sistema",
-            description: "Áudio do sistema capturado com sucesso!",
-            duration: 3000,
-          });
-        } catch (error) {
-          console.error('Erro ao capturar áudio do sistema:', error);
-          toast({
-            title: "Aviso",
-            description: "Não foi possível capturar o áudio do sistema. Apenas o microfone será gravado.",
-            duration: 5000,
-          });
-          finalStream = micStream;
+        const result = await setupSystemAudio(micStream, audioContextRef.current);
+        finalStream = result.stream;
+        if (result.cleanup) {
+          cleanupRef.current = result.cleanup;
         }
       } else {
         finalStream = micStream;
@@ -119,26 +65,7 @@ export const useAudioRecording = ({
 
       const processedStream = await audioPreprocessorRef.current.processAudioStream(finalStream);
       const recorder = new MediaRecorder(processedStream);
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-
-      recognition.lang = 'pt-BR';
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      recognition.onresult = (event) => {
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          const name = handleNameRecognition(transcript);
-
-          if (name && !voiceIdentificationService.profiles.find(p => p.name === name)) {
-            voiceIdentificationService.addProfile(name, new Float32Array(0));
-            toast({
-              title: "Novo participante identificado",
-              description: `Identificamos o participante: ${name}`,
-            });
-          }
-        }
-      };
+      const recognition = setupSpeechRecognition();
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -177,6 +104,10 @@ export const useAudioRecording = ({
       if (audioContextRef.current) {
         audioContextRef.current.close();
         audioContextRef.current = null;
+      }
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
       }
       mediaRecorderRef.current = null;
       speechRecognitionRef.current = null;
