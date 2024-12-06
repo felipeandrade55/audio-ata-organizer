@@ -36,7 +36,11 @@ export const setupSystemAudio = async (micStream: MediaStream, audioContext: Aud
         autoGainControl: true,
         suppressLocalAudioPlayback: false // Importante para Chrome
       } as CustomAudioConstraints,
-      video: false
+      video: {
+        mandatory: {
+          chromeMediaSource: 'desktop'
+        }
+      }
     };
 
     // @ts-ignore - TypeScript não reconhece getDisplayMedia ainda
