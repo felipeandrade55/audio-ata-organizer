@@ -32,8 +32,12 @@ export const transcribeWithGoogleCloud = async (
         languageCode: 'pt-BR',
         enableWordTimeOffsets: true,
         enableAutomaticPunctuation: true,
-        enableSpeakerDiarization: true, // Correto parâmetro para identificação de falantes
-        diarizationSpeakerCount: 2,     // Correto parâmetro para número de falantes
+        // Corrigindo os parâmetros de diarização
+        speakerDiarizationConfig: {
+          enableSpeakerDiarization: true,
+          minSpeakerCount: 1,
+          maxSpeakerCount: 2
+        },
         model: 'default',
       },
       audio: {
