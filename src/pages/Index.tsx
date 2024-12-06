@@ -1,6 +1,6 @@
 import { useSupabase } from "@/providers/SupabaseProvider";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, ListTodo } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import AuthForm from "@/components/auth/AuthForm";
@@ -13,7 +13,7 @@ import { useMeetings } from "@/hooks/useMeetings";
 import { RecordingHistorySection } from "@/components/history/RecordingHistorySection";
 import { MeetingHistorySection } from "@/components/history/MeetingHistorySection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { KanbanBoard } from "@/components/kanban/KanbanBoard";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const { user } = useSupabase();
@@ -70,6 +70,16 @@ const Index = () => {
                   </div>
                 </div>
                 <div className="flex gap-2 sm:gap-3">
+                  <Link to="/tasks">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-xs sm:text-sm border-emerald-200 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-800"
+                    >
+                      <ListTodo className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      Tarefas
+                    </Button>
+                  </Link>
                   <ProfileSettings />
                   <SettingsMenu />
                   <Button 
@@ -87,10 +97,9 @@ const Index = () => {
               {/* Main Content */}
               <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 <Tabs defaultValue="recording" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
                     <TabsTrigger value="recording">Gravação</TabsTrigger>
                     <TabsTrigger value="history">Histórico</TabsTrigger>
-                    <TabsTrigger value="tasks">Tarefas</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="recording">
@@ -113,10 +122,6 @@ const Index = () => {
                         error={error}
                       />
                     </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="tasks">
-                    <KanbanBoard userId={user.id} />
                   </TabsContent>
                 </Tabs>
               </div>

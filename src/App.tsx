@@ -5,6 +5,7 @@ import Index from "@/pages/Index";
 import ApiSettings from "@/pages/ApiSettings";
 import TranscriptionDetail from "@/pages/TranscriptionDetail";
 import Billing from "@/pages/Billing";
+import Tasks from "@/pages/Tasks";
 import { SupabaseProvider } from "@/providers/SupabaseProvider";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
           <Route path="/api-settings" element={<ApiSettings />} />
           <Route path="/transcription" element={<TranscriptionDetail />} />
           <Route path="/billing" element={<Billing />} />
+          <Route path="/tasks" element={<Tasks />} />
         </Routes>
       </Router>
       <Toaster />
