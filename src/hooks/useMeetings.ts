@@ -10,23 +10,7 @@ export const useMeetings = (userId: string) => {
     queryFn: async () => {
       const { data: meetingsData, error } = await supabase
         .from("meeting_minutes")
-        .select(`
-          id,
-          date,
-          start_time,
-          end_time,
-          location,
-          meeting_title,
-          organizer,
-          summary,
-          author,
-          meeting_type,
-          confidentiality_level,
-          version,
-          status,
-          last_modified,
-          user_id
-        `)
+        .select("*")
         .eq("user_id", userId);
 
       if (error) {
