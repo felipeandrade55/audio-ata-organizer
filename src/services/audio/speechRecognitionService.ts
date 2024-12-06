@@ -24,15 +24,18 @@ export const setupSpeechRecognition = () => {
     }
   };
 
-  recognition.onresult = (event) => {
+  recognition.onresult = async (event) => {
     const last = event.results.length - 1;
     const text = event.results[last][0].transcript;
     
-    handleNameRecognition(text).then(names => {
-      if (names.length > 0) {
-        voiceIdentificationService.addSpeakerNames(names);
-      }
-    });
+    const names = await handleNameRecognition(text);
+    if (names.length > 0) {
+      names.forEach(name => {
+        // Create a mock audio data for the profile
+        const mockAudioData = new Float32Array(1024);
+        voiceIdentificationService.addProfile(name, mockAudioData);
+      });
+    }
   };
 
   return recognition;
