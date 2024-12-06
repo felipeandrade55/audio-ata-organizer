@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { createAudioPreprocessor } from "@/services/audio";
 import { voiceIdentificationService } from "@/services/voiceIdentificationService";
 import { playIdentificationPrompt } from "@/services/audioService";
@@ -82,13 +82,13 @@ export const useAudioRecording = ({
     } catch (error) {
       console.error('Erro ao iniciar gravação:', error);
       toast({
+        variant: "destructive",
         title: "Erro",
         description: "Não foi possível acessar o microfone ou o áudio do sistema.",
-        variant: "destructive",
       });
       return null;
     }
-  }, [apiKey, transcriptionService, handleBackgroundNoise, onDataAvailable, toast, systemAudioEnabled]);
+  }, [apiKey, transcriptionService, handleBackgroundNoise, onDataAvailable, systemAudioEnabled, toast]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current) {

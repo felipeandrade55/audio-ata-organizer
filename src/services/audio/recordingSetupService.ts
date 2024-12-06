@@ -1,11 +1,11 @@
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export const validateApiKey = (apiKey: string, transcriptionService: 'openai' | 'google') => {
   if (!apiKey) {
     toast({
-      title: "Erro",
-      description: `Por favor, configure sua chave da API ${transcriptionService === 'openai' ? 'OpenAI' : 'Google Cloud'} nas variáveis de ambiente.`,
       variant: "destructive",
+      title: "Chave de API não encontrada",
+      description: `Configure uma chave de API válida para ${transcriptionService === 'openai' ? 'OpenAI' : 'Google Cloud'} nas configurações.`
     });
     return false;
   }
@@ -13,11 +13,10 @@ export const validateApiKey = (apiKey: string, transcriptionService: 'openai' | 
 };
 
 export const setupMicrophoneStream = async () => {
-  return navigator.mediaDevices.getUserMedia({
-    audio: {
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
-    }
-  });
+  try {
+    return await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (error) {
+    console.error('Erro ao acessar microfone:', error);
+    throw error;
+  }
 };

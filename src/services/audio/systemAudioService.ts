@@ -1,58 +1,63 @@
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 interface AudioStreamResult {
   stream: MediaStream;
   cleanup?: () => void;
 }
 
-export const setupSystemAudio = async (
-  micStream: MediaStream,
-  audioContext: AudioContext
-): Promise<AudioStreamResult> => {
+export const setupSystemAudio = async (micStream: MediaStream, audioContext: AudioContext): Promise<AudioStreamResult> => {
   try {
+    // @ts-ignore - TypeScript doesn't recognize getDisplayMedia yet
     const displayStream = await navigator.mediaDevices.getDisplayMedia({
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
-        autoGainControl: true,
+        sampleRate: 44100,
       },
       video: false
     });
 
-    const micSource = audioContext.createMediaStreamSource(micStream);
     const systemSource = audioContext.createMediaStreamSource(displayStream);
+    const micSource = audioContext.createMediaStreamSource(micStream);
+    
     const destination = audioContext.createMediaStreamDestination();
-
-    const micGain = audioContext.createGain();
+    
+    // Create gain nodes for volume control
     const systemGain = audioContext.createGain();
-
-    micGain.gain.value = 0.7;
-    systemGain.gain.value = 0.3;
-
-    micSource.connect(micGain).connect(destination);
+    const micGain = audioContext.createGain();
+    
+    systemGain.gain.value = 0.7; // Reduce system audio volume slightly
+    micGain.gain.value = 1.0;    // Keep mic volume at 100%
+    
     systemSource.connect(systemGain).connect(destination);
+    micSource.connect(micGain).connect(destination);
 
     toast({
-      title: "Áudio do Sistema",
-      description: "Áudio do sistema capturado com sucesso!",
-      duration: 3000,
+      title: "Áudio do sistema ativado",
+      description: "A gravação incluirá o áudio do sistema e do microfone."
     });
+
+    const cleanup = () => {
+      displayStream.getTracks().forEach(track => track.stop());
+      systemSource.disconnect();
+      micSource.disconnect();
+      systemGain.disconnect();
+      micGain.disconnect();
+    };
 
     return {
       stream: destination.stream,
-      cleanup: () => {
-        displayStream.getTracks().forEach(track => track.stop());
-        micGain.disconnect();
-        systemGain.disconnect();
-      }
+      cleanup
     };
+
   } catch (error) {
-    console.error('Erro ao capturar áudio do sistema:', error);
-    toast({
-      title: "Aviso",
-      description: "Não foi possível capturar o áudio do sistema. Apenas o microfone será gravado.",
-      duration: 5000,
-    });
-    return { stream: micStream };
+    if (error instanceof Error && error.name === 'NotAllowedError') {
+      toast({
+        variant: "destructive",
+        title: "Permissão negada",
+        description: "Você precisa permitir o compartilhamento do áudio do sistema."
+      });
+    }
+    throw error;
   }
 };
