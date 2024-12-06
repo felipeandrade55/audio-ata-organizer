@@ -42,19 +42,6 @@ const RecordingContainer = () => {
     tags: []
   });
 
-  const validateApiKey = (service: 'openai' | 'google') => {
-    const apiKey = localStorage.getItem(`${service}_api_key`);
-    if (!apiKey || apiKey.trim() === '') {
-      toast({
-        title: "Configuração Necessária",
-        description: `Por favor, configure uma chave de API válida para ${service === 'openai' ? 'OpenAI' : 'Google'} nas configurações antes de iniciar a gravação.`,
-        variant: "destructive",
-      });
-      return false;
-    }
-    return true;
-  };
-
   const {
     isRecording,
     isPaused,
@@ -104,7 +91,13 @@ const RecordingContainer = () => {
   };
 
   const handleStartRecording = async () => {
-    if (!validateApiKey(transcriptionService)) {
+    const apiKey = localStorage.getItem(`${transcriptionService}_api_key`);
+    if (!apiKey || apiKey.trim() === '') {
+      toast({
+        title: "Configuração Necessária",
+        description: `Por favor, configure uma chave de API válida para ${transcriptionService === 'openai' ? 'OpenAI' : 'Google Cloud'} nas configurações antes de iniciar a gravação.`,
+        variant: "destructive",
+      });
       return;
     }
     startRecording(identificationEnabled);

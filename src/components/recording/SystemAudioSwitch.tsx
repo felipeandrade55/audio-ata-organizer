@@ -19,17 +19,17 @@ const SystemAudioSwitch = ({ enabled, onToggle }: SystemAudioSwitchProps) => {
       <Speaker className="h-5 w-5 text-gray-500" />
       <div className="flex-1">
         <Label 
-          htmlFor="system-audio-mode"
+          htmlFor="system-audio"
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
           Gravar áudio do sistema
         </Label>
         <p className="text-xs text-muted-foreground mt-1">
-          Ative para capturar também o áudio reproduzido pelo seu dispositivo
+          Ative para capturar o áudio reproduzido pelo dispositivo
         </p>
       </div>
       <Switch
-        id="system-audio-mode"
+        id="system-audio"
         checked={enabled}
         onCheckedChange={onToggle}
         className="data-[state=checked]:bg-purple-600"
