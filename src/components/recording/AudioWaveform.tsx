@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { formatTime } from "@/lib/utils";
 
 interface AudioWaveformProps {
   isRecording: boolean;
@@ -6,6 +7,7 @@ interface AudioWaveformProps {
   audioContext: AudioContext | null;
   analyser: AnalyserNode | null;
   systemAnalyser: AnalyserNode | null;
+  onSpeechDetected?: (timestamp: number) => void;
 }
 
 const AudioWaveform = ({ 
@@ -13,10 +15,14 @@ const AudioWaveform = ({
   isPaused, 
   audioContext, 
   analyser,
-  systemAnalyser 
+  systemAnalyser,
+  onSpeechDetected 
 }: AudioWaveformProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
+  const lastSpeechDetectionRef = useRef<number>(0);
+  const silenceThreshold = 0.01;
+  const silenceDuration = 500; // ms of silence to consider a pause between phrases
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -30,10 +36,25 @@ const AudioWaveform = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const detectSpeech = (audioData: Float32Array) => {
+      const volume = audioData.reduce((sum, value) => sum + Math.abs(value), 0) / audioData.length;
+      const now = Date.now();
+      
+      if (volume > silenceThreshold) {
+        if (now - lastSpeechDetectionRef.current > silenceDuration) {
+          onSpeechDetected?.(now);
+        }
+        lastSpeechDetectionRef.current = now;
+      }
+    };
+
     const draw = () => {
       // Get microphone data
       const micDataArray = new Float32Array(analyser.frequencyBinCount);
       analyser.getFloatTimeDomainData(micDataArray);
+
+      // Detect speech from microphone input
+      detectSpeech(micDataArray);
 
       // Get system audio data if available
       let systemDataArray = new Float32Array(analyser.frequencyBinCount);
@@ -93,6 +114,12 @@ const AudioWaveform = ({
         ctx.stroke();
       }
 
+      // Add timestamp display
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "12px monospace";
+      const timestamp = formatTime(Date.now() - lastSpeechDetectionRef.current);
+      ctx.fillText(timestamp, 10, 20);
+
       animationFrameRef.current = requestAnimationFrame(draw);
     };
 
@@ -103,7 +130,7 @@ const AudioWaveform = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isRecording, isPaused, audioContext, analyser, systemAnalyser]);
+  }, [isRecording, isPaused, audioContext, analyser, systemAnalyser, onSpeechDetected]);
 
   return (
     <div className="w-full max-w-2xl mx-auto bg-gray-900 rounded-lg p-2 mb-4 shadow-lg">

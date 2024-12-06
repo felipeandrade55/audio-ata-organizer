@@ -2,8 +2,8 @@ export interface Segment {
   speaker: string;
   text: string;
   timestamp: string;
-  start: number;  // Adicionado
-  end: number;    // Adicionado
+  start: number;  // Timestamp in milliseconds when the phrase started
+  end: number;    // Timestamp in milliseconds when the phrase ended
   emotion?: {
     type: string;
     confidence: number;

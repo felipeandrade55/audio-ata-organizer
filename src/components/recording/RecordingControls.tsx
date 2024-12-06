@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import StartButton from "./StartButton";
 import ControlButtons from "./ControlButtons";
 import StopRecordingDialog from "./StopRecordingDialog";
+import { voiceIdentificationService } from "@/services/voiceIdentificationService";
 
 declare global {
   interface Window {
@@ -22,6 +23,7 @@ interface RecordingControlsProps {
   onStopRecording: () => void;
   onPauseRecording: () => void;
   onResumeRecording: () => void;
+  onSpeechDetected?: (timestamp: number, speaker: string) => void;
 }
 
 const RecordingControls = ({
@@ -33,11 +35,13 @@ const RecordingControls = ({
   onStopRecording,
   onPauseRecording,
   onResumeRecording,
+  onSpeechDetected,
 }: RecordingControlsProps) => {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [systemAnalyser, setSystemAnalyser] = useState<AnalyserNode | null>(null);
   const [showStopConfirmation, setShowStopConfirmation] = useState(false);
+  const audioDataRef = useRef<Float32Array | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -61,7 +65,6 @@ const RecordingControls = ({
       setAudioContext(context);
       setAnalyser(micAnalyser);
 
-      // Try to get system audio only if systemAudioEnabled is true
       if (window.systemAudioEnabled) {
         try {
           // @ts-ignore - TypeScript doesn't recognize getDisplayMedia yet
@@ -113,6 +116,18 @@ const RecordingControls = ({
     });
   };
 
+  const handleSpeechDetected = (timestamp: number) => {
+    if (!audioDataRef.current || !analyser) return;
+    
+    analyser.getFloatTimeDomainData(audioDataRef.current);
+    const speaker = voiceIdentificationService.identifyMostSimilarSpeaker(
+      audioDataRef.current,
+      timestamp
+    );
+    
+    onSpeechDetected?.(timestamp, speaker);
+  };
+
   return (
     <>
       <StopRecordingDialog 
@@ -135,6 +150,7 @@ const RecordingControls = ({
               audioContext={audioContext}
               analyser={analyser}
               systemAnalyser={systemAnalyser}
+              onSpeechDetected={handleSpeechDetected}
             />
           )}
           
