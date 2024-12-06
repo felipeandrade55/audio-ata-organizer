@@ -1,6 +1,6 @@
 import { useSupabase } from "@/providers/SupabaseProvider";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Mic, Calendar, Settings, Check } from "lucide-react";
+import { LogOut, User, Mic, Calendar, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import AuthForm from "@/components/auth/AuthForm";
@@ -48,8 +48,8 @@ const Index = () => {
                     <User className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Bem-vindo(a)</span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">{user.email}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Bem-vindo(a) ao</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">Enoque Transcritor</span>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -79,7 +79,7 @@ const Index = () => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                      Sistema de Gravação
+                      Enoque Transcritor
                     </h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Grave e transcreva suas reuniões com facilidade
@@ -157,7 +157,7 @@ const Index = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="text-3xl font-bold text-gray-900 dark:text-white mb-2"
               >
-                Bem-vindo(a)
+                Enoque Transcritor
               </motion.h1>
               <motion.p 
                 initial={{ opacity: 0 }}
