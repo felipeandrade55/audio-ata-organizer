@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Pause, Play } from "lucide-react";
 import { motion } from "framer-motion";
@@ -30,6 +30,8 @@ const RecordingControls = ({
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [noiseCheckInterval, setNoiseCheckInterval] = useState<number | null>(null);
+  const lastNoiseAlertRef = useRef<number>(0);
+  const NOISE_ALERT_COOLDOWN = 10000; // 10 segundos entre alertas
   const { toast } = useToast();
 
   useEffect(() => {
@@ -72,12 +74,14 @@ const RecordingControls = ({
     analyserNode.getFloatFrequencyData(dataArray);
 
     const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+    const now = Date.now();
     
-    if (average > -50 && isRecording && !isPaused) {
+    if (average > -50 && isRecording && !isPaused && now - lastNoiseAlertRef.current > NOISE_ALERT_COOLDOWN) {
+      lastNoiseAlertRef.current = now;
       toast({
-        title: "Aviso de Ruído",
-        description: "Foi detectado muito ruído de fundo. Isso pode afetar a qualidade da transcrição.",
-        duration: 3000,
+        title: "Dica para melhor qualidade",
+        description: "Detectamos alguns ruídos de fundo. Para uma transcrição mais precisa, que tal procurar um ambiente mais silencioso? 🎯",
+        duration: 5000,
       });
     }
   };
