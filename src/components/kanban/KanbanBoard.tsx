@@ -1,28 +1,15 @@
 import { useEffect, useState } from "react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, Calendar } from "lucide-react";
+import { DragDropContext } from "@hello-pangea/dnd";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: "todo" | "in_progress" | "review" | "done";
-  deadline?: string;
-  priority?: string;
-}
+import { Task, Column } from "./types";
+import { KanbanColumn } from "./KanbanColumn";
 
 interface KanbanBoardProps {
   userId: string;
 }
 
-const columns = [
+const defaultColumns: Column[] = [
   { id: "todo", title: "A Fazer" },
   { id: "in_progress", title: "Em Progresso" },
   { id: "review", title: "Revisão" },
@@ -103,19 +90,6 @@ export function KanbanBoard({ userId }: KanbanBoardProps) {
     }
   };
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority?.toLowerCase()) {
-      case "alta":
-        return "bg-red-500";
-      case "média":
-        return "bg-yellow-500";
-      case "baixa":
-        return "bg-green-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   if (isLoading) {
     return <div>Carregando tarefas...</div>;
   }
@@ -123,80 +97,13 @@ export function KanbanBoard({ userId }: KanbanBoardProps) {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {columns.map((column) => (
-          <Card key={column.id} className="bg-gray-50 dark:bg-gray-800/50">
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg font-semibold flex justify-between items-center">
-                {column.title}
-                <Badge variant="secondary" className="ml-2">
-                  {tasks.filter((task) => task.status === column.id).length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-2">
-              <Droppable droppableId={column.id}>
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="min-h-[200px]"
-                  >
-                    {tasks
-                      .filter((task) => task.status === column.id)
-                      .map((task, index) => (
-                        <Draggable
-                          key={task.id}
-                          draggableId={task.id}
-                          index={index}
-                        >
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className="mb-2"
-                            >
-                              <Card className="bg-white dark:bg-gray-800 shadow-sm">
-                                <CardContent className="p-4">
-                                  <div className="flex flex-col gap-2">
-                                    <div className="flex justify-between items-start">
-                                      <h3 className="font-medium">{task.title}</h3>
-                                      {task.priority && (
-                                        <Badge
-                                          className={`${getPriorityColor(
-                                            task.priority
-                                          )} text-white`}
-                                        >
-                                          {task.priority}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    {task.description && (
-                                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        {task.description}
-                                      </p>
-                                    )}
-                                    {task.deadline && (
-                                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                        <Calendar className="w-4 h-4 mr-1" />
-                                        {format(new Date(task.deadline), "PPP", {
-                                          locale: ptBR,
-                                        })}
-                                      </div>
-                                    )}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </CardContent>
-          </Card>
+        {defaultColumns.map((column) => (
+          <KanbanColumn
+            key={column.id}
+            id={column.id}
+            title={column.title}
+            tasks={tasks.filter((task) => task.status === column.id)}
+          />
         ))}
       </div>
     </DragDropContext>

@@ -201,9 +201,40 @@ export type Database = {
         }
         Relationships: []
       }
+      kanban_columns: {
+        Row: {
+          column_type: Database["public"]["Enums"]["kanban_column_type"] | null
+          created_at: string
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          column_type?: Database["public"]["Enums"]["kanban_column_type"] | null
+          created_at?: string
+          id?: string
+          order_index: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          column_type?: Database["public"]["Enums"]["kanban_column_type"] | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       kanban_tasks: {
         Row: {
           action_item_id: string | null
+          column_id: string | null
           created_at: string
           deadline: string | null
           description: string | null
@@ -217,6 +248,7 @@ export type Database = {
         }
         Insert: {
           action_item_id?: string | null
+          column_id?: string | null
           created_at?: string
           deadline?: string | null
           description?: string | null
@@ -230,6 +262,7 @@ export type Database = {
         }
         Update: {
           action_item_id?: string | null
+          column_id?: string | null
           created_at?: string
           deadline?: string | null
           description?: string | null
@@ -247,6 +280,13 @@ export type Database = {
             columns: ["action_item_id"]
             isOneToOne: false
             referencedRelation: "action_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kanban_tasks_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "kanban_columns"
             referencedColumns: ["id"]
           },
           {
@@ -550,6 +590,7 @@ export type Database = {
       }
     }
     Enums: {
+      kanban_column_type: "default" | "custom"
       task_status: "todo" | "in_progress" | "review" | "done"
     }
     CompositeTypes: {
