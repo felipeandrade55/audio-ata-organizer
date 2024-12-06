@@ -1,6 +1,6 @@
 import { voiceIdentificationService } from '../voiceIdentificationService';
 import { handleNameRecognition } from '../nameRecognitionService';
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 
 export const setupSpeechRecognition = () => {
   const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -28,13 +28,11 @@ export const setupSpeechRecognition = () => {
     const last = event.results.length - 1;
     const text = event.results[last][0].transcript;
     
-    const names = await handleNameRecognition(text);
-    if (names.length > 0) {
-      names.forEach(name => {
-        // Create a mock audio data for the profile
-        const mockAudioData = new Float32Array(1024);
-        voiceIdentificationService.addProfile(name, mockAudioData);
-      });
+    const name = await handleNameRecognition(text);
+    if (name) {
+      // Create a mock audio data for the profile
+      const mockAudioData = new Float32Array(1024);
+      voiceIdentificationService.addProfile(name, mockAudioData);
     }
   };
 
