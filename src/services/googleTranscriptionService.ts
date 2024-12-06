@@ -23,7 +23,7 @@ export const transcribeWithGoogleCloud = async (
 
     console.log("Enviando áudio para transcrição (Google Cloud)...");
 
-    // Configure request for Google Cloud Speech-to-Text
+    // Configure request for Google Cloud Speech-to-Text with correct parameter names
     const requestBody = {
       config: {
         encoding: audioBlob.type.includes('webm') ? 'WEBM_OPUS' : 'LINEAR16',
@@ -32,8 +32,9 @@ export const transcribeWithGoogleCloud = async (
         languageCode: 'pt-BR',
         enableWordTimeOffsets: true,
         enableAutomaticPunctuation: true,
-        enableSpeakerDiarization: true,
-        diarizationSpeakerCount: 2,
+        // Using correct parameter names for speaker diarization
+        enableSpeakerLabels: true,
+        maxSpeakerCount: 2,
         model: 'default',
       },
       audio: {
@@ -82,10 +83,10 @@ export const transcribeWithGoogleCloud = async (
           const seconds = Math.floor(startTime % 60);
           const timestamp = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
           
-          // Se houver informação de speaker no word
-          const speaker = word.speakerTag ? `Speaker ${word.speakerTag}` : 'Speaker 1';
+          // If there's speaker information in the word
+          const speaker = word.speakerLabel ? `Speaker ${word.speakerLabel}` : 'Speaker 1';
 
-          // Se mudou o timestamp ou o speaker, cria um novo segmento
+          // If timestamp or speaker changed, create a new segment
           if ((timestamp !== lastTimestamp && currentText) || (speaker !== lastSpeaker && lastSpeaker)) {
             if (currentText) {
               segments.push({
@@ -102,7 +103,7 @@ export const transcribeWithGoogleCloud = async (
           lastTimestamp = timestamp;
           lastSpeaker = speaker;
 
-          // Se é a última palavra, adiciona o segmento final
+          // If it's the last word, add the final segment
           if (index === words.length - 1 && currentText) {
             segments.push({
               timestamp: lastTimestamp,
@@ -112,7 +113,7 @@ export const transcribeWithGoogleCloud = async (
           }
         });
 
-        // Se não há words mas há transcript, cria um segmento único
+        // If there are no words but there is a transcript, create a single segment
         if (!words.length && result.alternatives[0].transcript) {
           segments.push({
             timestamp: '00:00',
