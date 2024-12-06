@@ -10,12 +10,14 @@ import AgendaItems from "./AgendaItems";
 import ActionItemsTable from "./ActionItemsTable";
 import MeetingSummary from "./MeetingSummary";
 import MeetingFooter from "./MeetingFooter";
+import { AudioReanalysisDialog } from "./AudioReanalysisDialog";
 
 interface MeetingMinutesDisplayProps {
   minutes: MeetingMinutes;
+  onUpdate?: () => void;
 }
 
-const MeetingMinutesDisplay = ({ minutes }: MeetingMinutesDisplayProps) => {
+const MeetingMinutesDisplay = ({ minutes, onUpdate }: MeetingMinutesDisplayProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -25,6 +27,12 @@ const MeetingMinutesDisplay = ({ minutes }: MeetingMinutesDisplayProps) => {
     >
       <Card className="w-full max-w-5xl mx-auto shadow-lg hover:shadow-xl transition-shadow duration-300">
         <MeetingHeader />
+        <div className="px-6 pt-4">
+          <AudioReanalysisDialog 
+            meetingId={minutes.id} 
+            onAnalysisComplete={() => onUpdate?.()}
+          />
+        </div>
         <CardContent className="space-y-8 p-6 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <MeetingInfoCard
