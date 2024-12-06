@@ -23,7 +23,6 @@ export const transcribeWithGoogleCloud = async (
 
     console.log("Enviando áudio para transcrição (Google Cloud)...");
 
-    // Configure request for Google Cloud Speech-to-Text with correct parameters
     const requestBody = {
       config: {
         encoding: audioBlob.type.includes('webm') ? 'WEBM_OPUS' : 'LINEAR16',
@@ -32,7 +31,6 @@ export const transcribeWithGoogleCloud = async (
         languageCode: 'pt-BR',
         enableWordTimeOffsets: true,
         enableAutomaticPunctuation: true,
-        // Corrigindo os parâmetros de diarização
         speakerDiarizationConfig: {
           enableSpeakerDiarization: true,
           minSpeakerCount: 1,
@@ -74,49 +72,62 @@ export const transcribeWithGoogleCloud = async (
         let currentText = '';
         let lastTimestamp = '';
         let lastSpeaker = '';
+        let segmentStart = 0;
+        let segmentEnd = 0;
 
         words.forEach((word: any, index: number) => {
           const startTime = parseFloat(word.startTime?.replace('s', '') || '0');
+          const endTime = parseFloat(word.endTime?.replace('s', '') || '0');
           const minutes = Math.floor(startTime / 60);
           const seconds = Math.floor(startTime % 60);
           const timestamp = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
           
-          // Se houver informação de speaker no word
           const speaker = word.speakerTag ? `Speaker ${word.speakerTag}` : 'Speaker 1';
 
-          // Se timestamp ou speaker mudou, cria novo segmento
           if ((timestamp !== lastTimestamp && currentText) || (speaker !== lastSpeaker && lastSpeaker)) {
             if (currentText) {
               segments.push({
                 timestamp: lastTimestamp || timestamp,
                 speaker: lastSpeaker || speaker,
                 text: currentText.trim(),
+                start: segmentStart,
+                end: segmentEnd,
+                emotion: undefined,
+                triggers: undefined
               });
             }
             currentText = word.word;
+            segmentStart = startTime;
           } else {
             currentText += ' ' + word.word;
           }
 
           lastTimestamp = timestamp;
           lastSpeaker = speaker;
+          segmentEnd = endTime;
 
-          // Se é a última palavra, adiciona o segmento final
           if (index === words.length - 1 && currentText) {
             segments.push({
               timestamp: lastTimestamp,
               speaker: lastSpeaker,
               text: currentText.trim(),
+              start: segmentStart,
+              end: segmentEnd,
+              emotion: undefined,
+              triggers: undefined
             });
           }
         });
 
-        // Se não há words mas há transcript, cria um único segmento
         if (!words.length && result.alternatives[0].transcript) {
           segments.push({
             timestamp: '00:00',
             speaker: 'Speaker 1',
             text: result.alternatives[0].transcript.trim(),
+            start: 0,
+            end: 0,
+            emotion: undefined,
+            triggers: undefined
           });
         }
       });
