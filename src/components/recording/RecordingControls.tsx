@@ -30,6 +30,7 @@ const RecordingControls = ({
 }: RecordingControlsProps) => {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  const [systemAnalyser, setSystemAnalyser] = useState<AnalyserNode | null>(null);
   const [showStopConfirmation, setShowStopConfirmation] = useState(false);
   const { toast } = useToast();
 
@@ -45,16 +46,38 @@ const RecordingControls = ({
 
   const setupAudioContext = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const context = new AudioContext();
-      const source = context.createMediaStreamSource(stream);
-      const analyserNode = context.createAnalyser();
-      
-      analyserNode.fftSize = 2048;
-      source.connect(analyserNode);
-      
+      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const micSource = context.createMediaStreamSource(micStream);
+      const micAnalyser = context.createAnalyser();
+      micAnalyser.fftSize = 2048;
+      micSource.connect(micAnalyser);
       setAudioContext(context);
-      setAnalyser(analyserNode);
+      setAnalyser(micAnalyser);
+
+      // Try to get system audio
+      try {
+        // @ts-ignore - TypeScript doesn't recognize getDisplayMedia yet
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          },
+          video: {
+            width: 1,
+            height: 1
+          }
+        });
+
+        const systemSource = context.createMediaStreamSource(displayStream);
+        const systemAnalyser = context.createAnalyser();
+        systemAnalyser.fftSize = 2048;
+        systemSource.connect(systemAnalyser);
+        setSystemAnalyser(systemAnalyser);
+      } catch (error) {
+        console.log('System audio not available:', error);
+      }
     } catch (error) {
       console.error("Erro ao configurar contexto de áudio:", error);
     }
@@ -66,6 +89,7 @@ const RecordingControls = ({
       setAudioContext(null);
     }
     setAnalyser(null);
+    setSystemAnalyser(null);
   };
 
   const handleStopRecording = () => {
@@ -102,6 +126,7 @@ const RecordingControls = ({
               isPaused={isPaused}
               audioContext={audioContext}
               analyser={analyser}
+              systemAnalyser={systemAnalyser}
             />
           )}
           
