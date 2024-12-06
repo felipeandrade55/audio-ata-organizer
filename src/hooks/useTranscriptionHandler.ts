@@ -37,10 +37,26 @@ export const useTranscriptionHandler = ({
         throw new Error('Usuário não autenticado');
       }
 
+      // Preparar os dados para inserção/atualização no banco
       const meetingData = {
-        ...minutes,
         user_id: session.user.id,
+        date: minutes.date,
+        start_time: minutes.startTime,
+        end_time: minutes.endTime || null,
+        location: minutes.location || 'Virtual - Gravação de Áudio',
+        meeting_title: minutes.meetingTitle,
+        organizer: minutes.organizer || null,
+        summary: minutes.summary || null,
+        author: minutes.author || 'Sistema de Transcrição',
+        approver: minutes.approver || null,
+        meeting_type: minutes.meetingType || 'initial',
+        confidentiality_level: minutes.confidentialityLevel || 'internal',
+        version: minutes.version || 1,
+        status: minutes.status || 'draft',
+        last_modified: new Date().toISOString()
       };
+
+      console.log('Dados preparados para salvar:', meetingData);
 
       const { data, error } = await supabase
         .from('meeting_minutes')
@@ -51,6 +67,70 @@ export const useTranscriptionHandler = ({
       if (error) {
         console.error('Erro ao salvar ata:', error);
         throw error;
+      }
+
+      console.log('Ata salva com sucesso:', data);
+
+      // Se houver participantes, salvá-los separadamente
+      if (minutes.participants && minutes.participants.length > 0) {
+        const participantsData = minutes.participants.map(participant => ({
+          meeting_id: data.id,
+          name: participant.name,
+          role: participant.role || null,
+          oab: participant.oab || null,
+          email: participant.email || null,
+          phone: participant.phone || null
+        }));
+
+        const { error: participantsError } = await supabase
+          .from('meeting_participants')
+          .upsert(participantsData);
+
+        if (participantsError) {
+          console.error('Erro ao salvar participantes:', participantsError);
+        }
+      }
+
+      // Se houver itens de agenda, salvá-los separadamente
+      if (minutes.agendaItems && minutes.agendaItems.length > 0) {
+        const agendaItemsData = minutes.agendaItems.map((item, index) => ({
+          meeting_id: data.id,
+          title: item.title,
+          discussion: item.discussion || null,
+          responsible: item.responsible || null,
+          decision: item.decision || null,
+          confidential: item.confidential || false,
+          order_index: index
+        }));
+
+        const { error: agendaError } = await supabase
+          .from('agenda_items')
+          .upsert(agendaItemsData);
+
+        if (agendaError) {
+          console.error('Erro ao salvar itens da agenda:', agendaError);
+        }
+      }
+
+      // Se houver itens de ação, salvá-los separadamente
+      if (minutes.actionItems && minutes.actionItems.length > 0) {
+        const actionItemsData = minutes.actionItems.map(item => ({
+          meeting_id: data.id,
+          task: item.task,
+          responsible: item.responsible || null,
+          deadline: item.deadline || null,
+          priority: item.priority || null,
+          status: item.status || 'pending',
+          legal_deadline: item.legalDeadline || false
+        }));
+
+        const { error: actionError } = await supabase
+          .from('action_items')
+          .upsert(actionItemsData);
+
+        if (actionError) {
+          console.error('Erro ao salvar itens de ação:', actionError);
+        }
       }
 
       return data;
