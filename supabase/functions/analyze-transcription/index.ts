@@ -17,6 +17,7 @@ serve(async (req) => {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAIApiKey) {
+      console.error('OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
     }
 
@@ -42,11 +43,6 @@ serve(async (req) => {
             3. Momentos-chave e decisões importantes, com seus respectivos timestamps
             4. Pontos de atenção ou preocupações levantadas
             5. Tópicos que geraram mais engajamento ou discussão
-            
-            Contexto da reunião:
-            - Título: ${meetingContext.title}
-            - Data: ${meetingContext.date}
-            - Participantes: ${JSON.stringify(meetingContext.participants)}
             
             Retorne apenas um objeto JSON com as seguintes chaves:
             {
@@ -78,7 +74,9 @@ serve(async (req) => {
     
     let analysis;
     try {
-      analysis = JSON.parse(data.choices[0].message.content);
+      // Garantir que a resposta é um JSON válido
+      const content = data.choices[0].message.content.trim();
+      analysis = JSON.parse(content);
       console.log('Parsed analysis:', analysis);
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
@@ -139,7 +137,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in analyze-transcription function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
