@@ -5,6 +5,11 @@ interface AudioStreamResult {
   cleanup?: () => void;
 }
 
+// Define a custom interface for our audio constraints
+interface CustomAudioConstraints extends MediaTrackConstraints {
+  suppressLocalAudioPlayback?: boolean;
+}
+
 export const setupSystemAudio = async (micStream: MediaStream, audioContext: AudioContext): Promise<AudioStreamResult> => {
   try {
     console.log('Iniciando configuração do áudio do sistema...');
@@ -22,17 +27,20 @@ export const setupSystemAudio = async (micStream: MediaStream, audioContext: Aud
 
     console.log('Solicitando permissão para captura de áudio do sistema...');
     
-    // @ts-ignore - TypeScript não reconhece getDisplayMedia ainda
-    const displayStream = await navigator.mediaDevices.getDisplayMedia({
+    // Define as constraints com type assertion
+    const constraints = {
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
         sampleRate: 44100,
         autoGainControl: true,
         suppressLocalAudioPlayback: false // Importante para Chrome
-      },
+      } as CustomAudioConstraints,
       video: false
-    });
+    };
+
+    // @ts-ignore - TypeScript não reconhece getDisplayMedia ainda
+    const displayStream = await navigator.mediaDevices.getDisplayMedia(constraints);
 
     console.log('Permissão concedida, verificando faixas de áudio...');
 
