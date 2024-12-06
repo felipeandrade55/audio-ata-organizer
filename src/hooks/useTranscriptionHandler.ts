@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { processTranscriptionResult } from "@/services/transcriptionService";
+import { processTranscriptionResult, updateMinutesFromTranscription } from "@/services/transcriptionService";
 import { transcribeWithGoogleCloud } from "@/services/googleTranscriptionService";
 import { TranscriptionSegment } from "@/types/transcription";
 import { findTriggers, updateMinutesWithTriggers } from "@/services/triggerService";
@@ -148,7 +148,7 @@ export const useTranscriptionHandler = ({
         const transcriptionText = segments.map(s => `${s.speaker}: ${s.text}`).join('\n');
         await saveTranscriptionRecord(savedMinutes.id, audioFileName, transcriptionText);
         
-        if (onMinutesUpdate) {
+        if (onMinutesUpdate && meetingMinutes) {
           const updatedMinutes = await updateMinutesFromTranscription(meetingMinutes, segments);
           const minutesWithTriggers = updateMinutesWithTriggers(updatedMinutes, 
             segments.flatMap(s => findTriggers(s.text))

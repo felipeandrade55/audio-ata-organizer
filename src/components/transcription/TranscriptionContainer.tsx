@@ -9,9 +9,9 @@ import { TranscriptionAnalysisStatus } from "./TranscriptionAnalysisStatus";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
-import { exportToFormat } from "@/utils/exportUtils";
 import { MinutesSection } from "./MinutesSection";
 import { MeetingMinutes } from "@/types/meeting";
+import { Segment } from "@/types/transcription";
 
 const TranscriptionContainer = () => {
   const location = useLocation();
@@ -19,11 +19,7 @@ const TranscriptionContainer = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [segments, setSegments] = useState<Array<{
-    timestamp: string;
-    speaker: string;
-    text: string;
-  }>>([]);
+  const [segments, setSegments] = useState<Segment[]>([]);
   const [minutes, setMinutes] = useState<MeetingMinutes | null>(null);
 
   useEffect(() => {
@@ -38,7 +34,16 @@ const TranscriptionContainer = () => {
     }
 
     const { segments: initialSegments, minutes: initialMinutes } = location.state;
-    setSegments(initialSegments);
+    if (initialSegments) {
+      // Convert the segments to include start and end times
+      const convertedSegments: Segment[] = initialSegments.map((segment: any) => ({
+        ...segment,
+        start: 0, // Default value, should be updated with actual timestamps
+        end: 0,   // Default value, should be updated with actual timestamps
+      }));
+      setSegments(convertedSegments);
+    }
+    
     if (initialMinutes) {
       console.log("Ata recebida:", initialMinutes);
       setMinutes(initialMinutes);
