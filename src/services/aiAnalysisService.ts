@@ -100,7 +100,7 @@ export const analyzeTranscription = async (
       summary: analysis.summary || "",
       nextSteps: analysis.nextSteps || [],
       author: "Sistema de Transcrição",
-      meetingType: "transcribed",
+      meetingType: "other", // Changed from "transcribed" to "other" to match the type definition
       confidentialityLevel: "internal",
       legalReferences: [],
       version: 1,
