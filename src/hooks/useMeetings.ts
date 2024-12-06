@@ -15,7 +15,8 @@ export const useMeetings = (userId: string | undefined) => {
 
   const fetchMinutes = async () => {
     try {
-      const { data, error } = await supabase
+      // First, fetch the basic meeting minutes data
+      const { data: meetingsData, error: meetingsError } = await supabase
         .from('meeting_minutes')
         .select(`
           id,
@@ -35,36 +36,63 @@ export const useMeetings = (userId: string | undefined) => {
           last_modified,
           created_at
         `)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
+      if (meetingsError) {
+        throw meetingsError;
       }
 
       // Transform the data to match the MeetingMinutes interface
-      const transformedData = data?.map(item => ({
-        id: item.id,
-        date: item.date,
-        startTime: item.start_time,
-        endTime: item.end_time,
-        location: item.location,
-        meetingTitle: item.meeting_title,
-        organizer: item.organizer,
-        summary: item.summary,
-        author: item.author,
-        approver: item.approver,
-        meetingType: item.meeting_type || 'other',
-        confidentialityLevel: item.confidentiality_level,
-        version: item.version,
-        status: item.status,
-        lastModified: item.last_modified,
-        participants: [], // These will be loaded separately if needed
-        agendaItems: [], // These will be loaded separately if needed
-        actionItems: [], // These will be loaded separately if needed
-        nextSteps: [], // This might need to be added to the database if required
-        legalReferences: [], // These will be loaded separately if needed
-        tags: [], // This might need to be added to the database if required
-      })) || [];
+      const transformedData: MeetingMinutes[] = await Promise.all((meetingsData || []).map(async (item) => {
+        // Fetch participants for this meeting
+        const { data: participants } = await supabase
+          .from('meeting_participants')
+          .select('*')
+          .eq('meeting_id', item.id);
+
+        // Fetch agenda items for this meeting
+        const { data: agendaItems } = await supabase
+          .from('agenda_items')
+          .select('*')
+          .eq('meeting_id', item.id);
+
+        // Fetch action items for this meeting
+        const { data: actionItems } = await supabase
+          .from('action_items')
+          .select('*')
+          .eq('meeting_id', item.id);
+
+        // Fetch legal references for this meeting
+        const { data: legalRefs } = await supabase
+          .from('legal_references')
+          .select('*')
+          .eq('meeting_id', item.id);
+
+        return {
+          id: item.id,
+          date: item.date,
+          startTime: item.start_time,
+          endTime: item.end_time,
+          location: item.location,
+          meetingTitle: item.meeting_title,
+          organizer: item.organizer,
+          summary: item.summary,
+          author: item.author,
+          approver: item.approver,
+          meetingType: item.meeting_type || 'other',
+          confidentialityLevel: item.confidentiality_level,
+          version: item.version,
+          status: item.status,
+          lastModified: item.last_modified,
+          participants: participants || [],
+          agendaItems: agendaItems || [],
+          actionItems: actionItems || [],
+          nextSteps: [], // This field isn't in the database, initialize as empty
+          legalReferences: legalRefs || [],
+          tags: [], // This field isn't in the database, initialize as empty
+        };
+      }));
 
       setMinutes(transformedData);
     } catch (error) {
