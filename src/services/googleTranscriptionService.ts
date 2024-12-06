@@ -22,8 +22,6 @@ export const transcribeWithGoogleCloud = async (
     });
 
     console.log("Enviando áudio para transcrição (Google Cloud)...");
-    console.log("Formato do áudio:", audioBlob.type);
-    console.log("Comprimento da chave API:", apiKey?.length || 0);
 
     // Configure request for Google Cloud Speech-to-Text
     const requestBody = {
@@ -34,6 +32,8 @@ export const transcribeWithGoogleCloud = async (
         languageCode: 'pt-BR',
         enableWordTimeOffsets: true,
         enableAutomaticPunctuation: true,
+        enableSpeakerDiarization: true,
+        diarizationSpeakerCount: 2,
         model: 'default',
       },
       audio: {
@@ -43,7 +43,6 @@ export const transcribeWithGoogleCloud = async (
 
     console.log("Configuração da requisição:", JSON.stringify(requestBody.config, null, 2));
 
-    // Use API key as query parameter
     const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
       method: 'POST',
       headers: {
@@ -52,30 +51,15 @@ export const transcribeWithGoogleCloud = async (
       body: JSON.stringify(requestBody)
     });
 
-    const responseText = await response.text();
-    console.log("Resposta da API do Google Cloud:", responseText);
-
-    let responseData;
-    try {
-      responseData = JSON.parse(responseText);
-    } catch (e) {
-      console.error('Erro ao processar resposta da API do Google Cloud:', e);
-      throw new Error('Falha ao processar resposta da API do Google Cloud');
-    }
-
     if (!response.ok) {
-      console.error('Erro na API do Google Cloud:', responseData);
-      
-      const errorMessage = responseData.error?.message || 'Erro desconhecido';
-      const errorDetails = responseData.error?.details?.[0]?.reason || '';
-      
-      throw new Error(
-        `Erro na API do Google Cloud: ${errorMessage}${errorDetails ? ` (${errorDetails})` : ''}\n` +
-        'Por favor, verifique se sua chave API do Google Cloud é válida e tem a API Speech-to-Text habilitada.'
-      );
+      const errorText = await response.text();
+      console.error('Erro na API do Google Cloud:', errorText);
+      throw new Error(`Erro na API do Google Cloud: ${response.status} - ${errorText}`);
     }
 
-    // Process the result and convert to our system's format
+    const responseData = await response.json();
+    console.log("Resposta da API do Google Cloud:", JSON.stringify(responseData, null, 2));
+
     const segments: TranscriptionSegment[] = [];
     let currentSegment: TranscriptionSegment = {
       timestamp: '00:00',
@@ -83,38 +67,63 @@ export const transcribeWithGoogleCloud = async (
       text: '',
     };
 
-    if (responseData.results && responseData.results.length > 0) {
-      responseData.results.forEach((result: any) => {
-        const alternatives = result.alternatives[0];
-        if (alternatives && alternatives.words) {
-          alternatives.words.forEach((word: any) => {
-            const startTime = parseFloat(word.startTime.replace('s', ''));
-            const minutes = Math.floor(startTime / 60);
-            const seconds = Math.floor(startTime % 60);
-            const timestamp = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    if (responseData.results) {
+      responseData.results.forEach((result: any, resultIndex: number) => {
+        if (!result.alternatives?.[0]) return;
 
-            if (timestamp !== currentSegment.timestamp && currentSegment.text) {
-              segments.push({ ...currentSegment });
-              currentSegment = {
-                timestamp,
-                speaker: 'Speaker 1',
-                text: word.word,
-              };
-            } else {
-              currentSegment.text += ' ' + word.word;
+        const words = result.alternatives[0].words || [];
+        let currentText = '';
+        let lastTimestamp = '';
+        let lastSpeaker = '';
+
+        words.forEach((word: any, index: number) => {
+          const startTime = parseFloat(word.startTime?.replace('s', '') || '0');
+          const minutes = Math.floor(startTime / 60);
+          const seconds = Math.floor(startTime % 60);
+          const timestamp = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          
+          // Se houver informação de speaker no word
+          const speaker = word.speakerTag ? `Speaker ${word.speakerTag}` : 'Speaker 1';
+
+          // Se mudou o timestamp ou o speaker, cria um novo segmento
+          if ((timestamp !== lastTimestamp && currentText) || (speaker !== lastSpeaker && lastSpeaker)) {
+            if (currentText) {
+              segments.push({
+                timestamp: lastTimestamp || timestamp,
+                speaker: lastSpeaker || speaker,
+                text: currentText.trim(),
+              });
             }
+            currentText = word.word;
+          } else {
+            currentText += ' ' + word.word;
+          }
+
+          lastTimestamp = timestamp;
+          lastSpeaker = speaker;
+
+          // Se é a última palavra, adiciona o segmento final
+          if (index === words.length - 1 && currentText) {
+            segments.push({
+              timestamp: lastTimestamp,
+              speaker: lastSpeaker,
+              text: currentText.trim(),
+            });
+          }
+        });
+
+        // Se não há words mas há transcript, cria um segmento único
+        if (!words.length && result.alternatives[0].transcript) {
+          segments.push({
+            timestamp: '00:00',
+            speaker: 'Speaker 1',
+            text: result.alternatives[0].transcript.trim(),
           });
-        } else if (alternatives && alternatives.transcript) {
-          currentSegment.text = alternatives.transcript;
-          segments.push({ ...currentSegment });
         }
       });
-
-      if (currentSegment.text) {
-        segments.push(currentSegment);
-      }
     }
 
+    console.log("Segmentos processados do Google Cloud:", segments);
     return segments;
   } catch (error) {
     console.error('Erro na transcrição com Google Cloud:', error);
