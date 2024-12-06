@@ -6,7 +6,7 @@ interface ParticipantsListProps {
   participants: MeetingParticipant[];
 }
 
-const ParticipantsList = ({ participants }: ParticipantsListProps) => {
+const ParticipantsList = ({ participants = [] }: ParticipantsListProps) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -19,7 +19,7 @@ const ParticipantsList = ({ participants }: ParticipantsListProps) => {
         <h3 className="text-xl font-semibold">Participantes</h3>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {participants.map((participant, index) => (
+        {(participants || []).map((participant, index) => (
           <motion.div
             key={index}
             className="flex items-center space-x-3 p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200"
