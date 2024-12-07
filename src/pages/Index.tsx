@@ -14,6 +14,7 @@ import { RecordingHistorySection } from "@/components/history/RecordingHistorySe
 import { MeetingHistorySection } from "@/components/history/MeetingHistorySection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
+import { HelpMenu } from "@/components/help/HelpMenu";
 
 const Index = () => {
   const { user } = useSupabase();
@@ -86,6 +87,7 @@ const Index = () => {
                   </Link>
                   <ProfileSettings />
                   <SettingsMenu />
+                  <HelpMenu />
                   <Button 
                     variant="outline" 
                     size="sm" 
