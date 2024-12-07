@@ -12,6 +12,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MinutesSection } from "./MinutesSection";
 import { MeetingMinutes } from "@/types/meeting";
 import { Segment } from "@/types/transcription";
+import { analyzeTranscriptionWithAI } from "@/services/aiAnalysisService";
+import { AIAnalysisPanel } from "./AIAnalysisPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TranscriptionContainer = () => {
   const location = useLocation();
@@ -21,6 +24,7 @@ const TranscriptionContainer = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [minutes, setMinutes] = useState<MeetingMinutes | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
 
   useEffect(() => {
     if (!location.state) {
@@ -35,11 +39,10 @@ const TranscriptionContainer = () => {
 
     const { segments: initialSegments, minutes: initialMinutes } = location.state;
     if (initialSegments) {
-      // Convert the segments to include start and end times
       const convertedSegments: Segment[] = initialSegments.map((segment: any) => ({
         ...segment,
-        start: 0, // Default value, should be updated with actual timestamps
-        end: 0,   // Default value, should be updated with actual timestamps
+        start: 0,
+        end: 0,
       }));
       setSegments(convertedSegments);
     }
@@ -48,7 +51,35 @@ const TranscriptionContainer = () => {
       console.log("Ata recebida:", initialMinutes);
       setMinutes(initialMinutes);
     }
+
+    // Start AI analysis
+    if (initialSegments && initialMinutes) {
+      handleAIAnalysis(initialSegments, initialMinutes);
+    }
   }, [location.state, navigate, toast]);
+
+  const handleAIAnalysis = async (segments: Segment[], minutes: MeetingMinutes) => {
+    setIsAnalyzing(true);
+    try {
+      const analysis = await analyzeTranscriptionWithAI(segments, minutes);
+      if (analysis) {
+        setAiAnalysis(analysis);
+        toast({
+          title: "Análise concluída",
+          description: "A análise de IA foi concluída com sucesso.",
+        });
+      }
+    } catch (error) {
+      console.error('Error in AI analysis:', error);
+      toast({
+        title: "Erro na análise",
+        description: "Não foi possível completar a análise de IA.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   if (!location.state) {
     return null;
@@ -86,18 +117,30 @@ const TranscriptionContainer = () => {
               onAddToCalendar={() => {}}
             />
 
-            {minutes && (
-              <div className="mt-6">
-                <MinutesSection minutes={minutes} onMinutesUpdate={setMinutes} />
-              </div>
-            )}
+            <Tabs defaultValue="transcription" className="mt-6">
+              <TabsList>
+                <TabsTrigger value="transcription">Transcrição</TabsTrigger>
+                <TabsTrigger value="analysis">Análise de IA</TabsTrigger>
+                <TabsTrigger value="minutes">Ata</TabsTrigger>
+              </TabsList>
 
-            <div className="mt-6">
-              <TranscriptionTable
-                segments={segments}
-                onUpdateSegments={setSegments}
-              />
-            </div>
+              <TabsContent value="transcription">
+                <TranscriptionTable
+                  segments={segments}
+                  onUpdateSegments={setSegments}
+                />
+              </TabsContent>
+
+              <TabsContent value="analysis">
+                <AIAnalysisPanel analysis={aiAnalysis} isLoading={isAnalyzing} />
+              </TabsContent>
+
+              <TabsContent value="minutes">
+                {minutes && (
+                  <MinutesSection minutes={minutes} onMinutesUpdate={setMinutes} />
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
