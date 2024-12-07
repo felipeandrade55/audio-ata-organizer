@@ -16,7 +16,14 @@ interface TranscriptionRecord {
   created_at: string;
   error_message?: string;
   retry_count: number;
+  size?: number;
 }
+
+const formatFileSize = (bytes?: number): string => {
+  if (!bytes) return "Tamanho desconhecido";
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(2)} MB`;
+};
 
 export const RecordingHistory = () => {
   const [recordings, setRecordings] = useState<TranscriptionRecord[]>([]);
@@ -33,7 +40,7 @@ export const RecordingHistory = () => {
       const { data, error } = await supabase
         .from("transcription_history")
         .select("*")
-        .order("created_at", { ascending: false }); // Changed to false to show newest first
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setRecordings(data || []);
@@ -151,6 +158,9 @@ export const RecordingHistory = () => {
                           : recording.status === "completed"
                           ? "Concluído"
                           : "Processando"}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatFileSize(recording.size)}
                       </span>
                     </div>
                     {recording.error_message && (
