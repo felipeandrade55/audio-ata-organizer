@@ -1,19 +1,26 @@
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { MeetingMinutes } from "@/types/meeting";
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { MeetingBasicInfo } from "./form/MeetingBasicInfo";
+import { ParticipantsSection } from "./form/ParticipantsSection";
+import { AgendaItemsSection } from "./form/AgendaItemsSection";
+import { ActionItemsSection } from "./form/ActionItemsSection";
+import { SummarySection } from "./form/SummarySection";
+import { NextStepsSection } from "./form/NextStepsSection";
+import { ApprovalSection } from "./form/ApprovalSection";
+import { motion } from "framer-motion";
+import { 
+  FileText, 
+  Users, 
+  ListTodo, 
+  CheckSquare, 
+  FileCheck, 
+  ArrowRight, 
+  User 
+} from "lucide-react";
 
 interface MeetingMinutesEditProps {
   minutes: MeetingMinutes;
@@ -47,6 +54,7 @@ const MeetingMinutesEdit = ({ minutes, onSave, onCancel }: MeetingMinutesEditPro
     });
   };
 
+  // Participant handlers
   const addParticipant = () => {
     setParticipants([...participants, { name: "", role: "" }]);
   };
@@ -61,6 +69,7 @@ const MeetingMinutesEdit = ({ minutes, onSave, onCancel }: MeetingMinutesEditPro
     setParticipants(updated);
   };
 
+  // Agenda item handlers
   const addAgendaItem = () => {
     setAgendaItems([...agendaItems, { title: "", discussion: "", responsible: "", decision: "" }]);
   };
@@ -75,6 +84,7 @@ const MeetingMinutesEdit = ({ minutes, onSave, onCancel }: MeetingMinutesEditPro
     setAgendaItems(updated);
   };
 
+  // Action item handlers
   const addActionItem = () => {
     setActionItems([...actionItems, {
       task: "",
@@ -95,6 +105,7 @@ const MeetingMinutesEdit = ({ minutes, onSave, onCancel }: MeetingMinutesEditPro
     setActionItems(updated);
   };
 
+  // Next step handlers
   const addNextStep = () => {
     setNextSteps([...nextSteps, ""]);
   };
@@ -111,279 +122,128 @@ const MeetingMinutesEdit = ({ minutes, onSave, onCancel }: MeetingMinutesEditPro
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Data</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="startTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Horário de Início</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="endTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Horário de Término</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Local</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="meetingTitle"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Título da Reunião</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="organizer"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Organizador</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Participantes</h3>
-            <Button type="button" variant="outline" size="sm" onClick={addParticipant}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Participante
-            </Button>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-lg shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="h-6 w-6 text-purple-500" />
+            <h2 className="text-2xl font-semibold">Editar Ata da Reunião</h2>
           </div>
-          {participants.map((participant, index) => (
-            <div key={index} className="flex gap-4 items-start">
-              <Input
-                value={participant.name}
-                onChange={(e) => updateParticipant(index, "name", e.target.value)}
-                placeholder="Nome"
-              />
-              <Input
-                value={participant.role}
-                onChange={(e) => updateParticipant(index, "role", e.target.value)}
-                placeholder="Cargo/Função"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeParticipant(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
+          <MeetingBasicInfo form={form} />
+        </motion.div>
 
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Pauta da Reunião</h3>
-            <Button type="button" variant="outline" size="sm" onClick={addAgendaItem}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Item
-            </Button>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-6 w-6 text-blue-500" />
+            <h3 className="text-xl font-semibold">Participantes</h3>
           </div>
-          {agendaItems.map((item, index) => (
-            <div key={index} className="space-y-4 p-4 border rounded-lg">
-              <div className="flex justify-between items-start">
-                <div className="flex-1 space-y-4">
-                  <Input
-                    value={item.title}
-                    onChange={(e) => updateAgendaItem(index, "title", e.target.value)}
-                    placeholder="Título"
-                  />
-                  <Textarea
-                    value={item.discussion}
-                    onChange={(e) => updateAgendaItem(index, "discussion", e.target.value)}
-                    placeholder="Discussão"
-                  />
-                  <Input
-                    value={item.responsible}
-                    onChange={(e) => updateAgendaItem(index, "responsible", e.target.value)}
-                    placeholder="Responsável"
-                  />
-                  <Input
-                    value={item.decision}
-                    onChange={(e) => updateAgendaItem(index, "decision", e.target.value)}
-                    placeholder="Decisão"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeAgendaItem(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Ações Definidas</h3>
-            <Button type="button" variant="outline" size="sm" onClick={addActionItem}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Ação
-            </Button>
-          </div>
-          {actionItems.map((action, index) => (
-            <div key={index} className="flex gap-4 items-start">
-              <Input
-                value={action.task}
-                onChange={(e) => updateActionItem(index, "task", e.target.value)}
-                placeholder="Tarefa"
-              />
-              <Input
-                value={action.responsible}
-                onChange={(e) => updateActionItem(index, "responsible", e.target.value)}
-                placeholder="Responsável"
-              />
-              <Input
-                value={action.deadline}
-                onChange={(e) => updateActionItem(index, "deadline", e.target.value)}
-                placeholder="Prazo"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeActionItem(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        <FormField
-          control={form.control}
-          name="summary"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Resumo da Reunião</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Próximos Passos</h3>
-            <Button type="button" variant="outline" size="sm" onClick={addNextStep}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Passo
-            </Button>
-          </div>
-          {nextSteps.map((step, index) => (
-            <div key={index} className="flex gap-4 items-start">
-              <Input
-                value={step}
-                onChange={(e) => updateNextStep(index, e.target.value)}
-                placeholder="Próximo passo"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeNextStep(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="author"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Elaborado por</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <ParticipantsSection
+            participants={participants}
+            onAddParticipant={addParticipant}
+            onRemoveParticipant={removeParticipant}
+            onUpdateParticipant={updateParticipant}
           />
-          <FormField
-            control={form.control}
-            name="approver"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Aprovado por</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        </motion.div>
 
-        <div className="flex justify-end gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <ListTodo className="h-6 w-6 text-green-500" />
+            <h3 className="text-xl font-semibold">Pauta</h3>
+          </div>
+          <AgendaItemsSection
+            agendaItems={agendaItems}
+            onAddAgendaItem={addAgendaItem}
+            onRemoveAgendaItem={removeAgendaItem}
+            onUpdateAgendaItem={updateAgendaItem}
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <CheckSquare className="h-6 w-6 text-orange-500" />
+            <h3 className="text-xl font-semibold">Ações</h3>
+          </div>
+          <ActionItemsSection
+            actionItems={actionItems}
+            onAddActionItem={addActionItem}
+            onRemoveActionItem={removeActionItem}
+            onUpdateActionItem={updateActionItem}
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <FileCheck className="h-6 w-6 text-indigo-500" />
+            <h3 className="text-xl font-semibold">Resumo</h3>
+          </div>
+          <SummarySection form={form} />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <ArrowRight className="h-6 w-6 text-teal-500" />
+            <h3 className="text-xl font-semibold">Próximos Passos</h3>
+          </div>
+          <NextStepsSection
+            nextSteps={nextSteps}
+            onAddNextStep={addNextStep}
+            onRemoveNextStep={removeNextStep}
+            onUpdateNextStep={updateNextStep}
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <User className="h-6 w-6 text-purple-500" />
+            <h3 className="text-xl font-semibold">Aprovação</h3>
+          </div>
+          <ApprovalSection form={form} />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="flex justify-end gap-4 sticky bottom-0 bg-white dark:bg-gray-800 p-4 border-t"
+        >
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
           <Button type="submit">Salvar Alterações</Button>
-        </div>
+        </motion.div>
       </form>
     </Form>
   );
