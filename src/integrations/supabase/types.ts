@@ -527,41 +527,53 @@ export type Database = {
       transcription_history: {
         Row: {
           audio_path: string
+          confidence: number | null
           created_at: string
           error_message: string | null
           id: string
           key_moments: Json | null
           meeting_id: string | null
+          original_filename: string | null
+          participants_count: number | null
           processed_at: string | null
           retry_count: number | null
           sentiment_analysis: Json | null
           status: string
+          tags: string[] | null
           transcription_text: string | null
         }
         Insert: {
           audio_path: string
+          confidence?: number | null
           created_at?: string
           error_message?: string | null
           id?: string
           key_moments?: Json | null
           meeting_id?: string | null
+          original_filename?: string | null
+          participants_count?: number | null
           processed_at?: string | null
           retry_count?: number | null
           sentiment_analysis?: Json | null
           status?: string
+          tags?: string[] | null
           transcription_text?: string | null
         }
         Update: {
           audio_path?: string
+          confidence?: number | null
           created_at?: string
           error_message?: string | null
           id?: string
           key_moments?: Json | null
           meeting_id?: string | null
+          original_filename?: string | null
+          participants_count?: number | null
           processed_at?: string | null
           retry_count?: number | null
           sentiment_analysis?: Json | null
           status?: string
+          tags?: string[] | null
           transcription_text?: string | null
         }
         Relationships: [
