@@ -37,6 +37,17 @@ export const AIAnalysisPanel = ({ analysis, isLoading }: AIAnalysisPanelProps) =
     );
   }
 
+  const getSentimentVariant = (type: string) => {
+    switch (type) {
+      case 'positive':
+        return 'default';
+      case 'negative':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
     <ScrollArea className="h-[600px]">
       <div className="space-y-6 p-4">
@@ -50,7 +61,7 @@ export const AIAnalysisPanel = ({ analysis, isLoading }: AIAnalysisPanelProps) =
             {analysis.sentiment.map((item: any, index: number) => (
               <div key={index} className="flex items-center justify-between">
                 <span>{item.context}</span>
-                <Badge variant={item.type === 'positive' ? 'success' : item.type === 'negative' ? 'destructive' : 'secondary'}>
+                <Badge variant={getSentimentVariant(item.type)}>
                   {item.type} ({Math.round(item.confidence * 100)}%)
                 </Badge>
               </div>

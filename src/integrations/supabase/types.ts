@@ -526,6 +526,7 @@ export type Database = {
       }
       transcription_history: {
         Row: {
+          ai_analysis: Json | null
           audio_path: string
           confidence: number | null
           created_at: string
@@ -543,6 +544,7 @@ export type Database = {
           transcription_text: string | null
         }
         Insert: {
+          ai_analysis?: Json | null
           audio_path: string
           confidence?: number | null
           created_at?: string
@@ -560,6 +562,7 @@ export type Database = {
           transcription_text?: string | null
         }
         Update: {
+          ai_analysis?: Json | null
           audio_path?: string
           confidence?: number | null
           created_at?: string
