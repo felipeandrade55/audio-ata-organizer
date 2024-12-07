@@ -32,7 +32,7 @@ export interface LegalReference {
 }
 
 export interface MeetingMinutes {
-  id: string;  // Added this property
+  id: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -54,4 +54,5 @@ export interface MeetingMinutes {
   lastModified: string;
   tags: string[];
   apiKey?: string;
+  attachments?: { id: string; name: string; file_path: string }[];  // Added this property
 }
