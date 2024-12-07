@@ -22,10 +22,10 @@ export default defineConfig(({ mode }) => ({
       transformMixedEsModules: true,
     },
     rollupOptions: {
+      external: ['date-fns'],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          datepicker: ['react-day-picker', 'date-fns'],
         },
       },
     },
