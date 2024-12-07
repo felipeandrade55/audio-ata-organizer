@@ -31,16 +31,6 @@ export const useAudioRecording = ({
   const audioChunksRef = useRef<BlobPart[]>([]);
   const currentSizeRef = useRef<number>(0);
 
-  const handleBackgroundNoise = useCallback((isNoisy: boolean) => {
-    if (isNoisy) {
-      toast({
-        title: "Aviso de Ruído",
-        description: "Foi detectado muito ruído de fundo. Isso pode afetar a qualidade da transcrição.",
-        duration: 3000,
-      });
-    }
-  }, [toast]);
-
   const startRecording = useCallback(async (identificationEnabled: boolean) => {
     if (!validateApiKey(apiKey, transcriptionService)) return null;
 
@@ -51,7 +41,6 @@ export const useAudioRecording = ({
       }
 
       audioPreprocessorRef.current = createAudioPreprocessor();
-      audioPreprocessorRef.current.setNoiseCallback(handleBackgroundNoise);
       audioContextRef.current = new AudioContext();
 
       const micStream = await setupMicrophoneStream();
@@ -112,7 +101,7 @@ export const useAudioRecording = ({
       });
       return null;
     }
-  }, [apiKey, transcriptionService, handleBackgroundNoise, onDataAvailable, systemAudioEnabled, toast]);
+  }, [apiKey, transcriptionService, onDataAvailable, systemAudioEnabled, toast]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current) {
