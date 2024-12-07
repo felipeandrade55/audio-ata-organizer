@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, LayoutGrid, List, Users, Clock, FileText, Search as SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { MeetingsList } from "../meeting/MeetingsList";
 import { MeetingTypeFilter } from "../filters/MeetingTypeFilter";
+import { DateRangeFilter } from "../filters/DateRangeFilter";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { MeetingMinutes } from "@/types/meeting";
 import { DeleteMinutesDialog } from "../meeting/DeleteMinutesDialog";
 
@@ -27,6 +29,8 @@ export const MeetingHistorySection = ({
   error
 }: MeetingHistorySectionProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const handleSelectAll = () => {
     if (selectedIds.length === filteredMinutes.length) {
@@ -39,21 +43,38 @@ export const MeetingHistorySection = ({
   return (
     <div className="space-y-4">
       <div className="flex flex-col space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Histórico de Atas
           </h3>
-          <MeetingTypeFilter 
-            value={meetingType} 
-            onValueChange={setMeetingType} 
-          />
+          <div className="flex items-center gap-2">
+            <DateRangeFilter 
+              value={dateRange}
+              onValueChange={setDateRange}
+            />
+            <MeetingTypeFilter 
+              value={meetingType} 
+              onValueChange={setMeetingType} 
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+            >
+              {viewMode === "grid" ? (
+                <List className="h-4 w-4" />
+              ) : (
+                <LayoutGrid className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
         <div className="flex items-center justify-between gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
               type="text"
-              placeholder="Buscar por título ou conteúdo..."
+              placeholder="Buscar por título, conteúdo ou participantes..."
               value={meetingSearch}
               onChange={(e) => setMeetingSearch(e.target.value)}
               className="pl-10"
@@ -75,7 +96,6 @@ export const MeetingHistorySection = ({
                 <DeleteMinutesDialog
                   selectedIds={selectedIds}
                   onDeleteComplete={() => {
-                    // Trigger a refetch in the parent component
                     window.location.reload();
                   }}
                   onClearSelection={() => setSelectedIds([])}
@@ -106,6 +126,7 @@ export const MeetingHistorySection = ({
                 : [...prev, id]
             );
           }}
+          viewMode={viewMode}
         />
       )}
     </div>

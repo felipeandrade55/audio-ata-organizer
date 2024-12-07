@@ -18,6 +18,9 @@ export const DateRangeFilter = ({ value, onValueChange }: DateRangeFilterProps) 
         <SelectItem value="today">Hoje</SelectItem>
         <SelectItem value="week">Última semana</SelectItem>
         <SelectItem value="month">Último mês</SelectItem>
+        <SelectItem value="3months">Últimos 3 meses</SelectItem>
+        <SelectItem value="6months">Últimos 6 meses</SelectItem>
+        <SelectItem value="year">Último ano</SelectItem>
         <SelectItem value="all">Todos</SelectItem>
       </SelectContent>
     </Select>
