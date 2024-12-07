@@ -58,8 +58,8 @@ export const RecordingCard = ({
                 recording.status === "error"
                   ? "destructive"
                   : recording.status === "completed"
-                  ? "success"
-                  : "warning"
+                  ? "default"
+                  : "secondary"
               }
             >
               {recording.status === "error"
