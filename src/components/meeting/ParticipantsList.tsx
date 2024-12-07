@@ -1,12 +1,22 @@
 import { motion } from "framer-motion";
 import { User, Users } from "lucide-react";
 import { MeetingParticipant } from "@/types/meeting";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface ParticipantsListProps {
   participants: MeetingParticipant[];
 }
 
 const ParticipantsList = ({ participants = [] }: ParticipantsListProps) => {
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -19,7 +29,7 @@ const ParticipantsList = ({ participants = [] }: ParticipantsListProps) => {
         <h3 className="text-xl font-semibold">Participantes</h3>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(participants || []).map((participant, index) => (
+        {participants.map((participant, index) => (
           <motion.div
             key={index}
             className="flex items-center space-x-3 p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200"
@@ -27,10 +37,19 @@ const ParticipantsList = ({ participants = [] }: ParticipantsListProps) => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <User className="h-5 w-5 text-gray-500" />
-            <span className="font-medium">
-              {participant.name} {participant.role && `- ${participant.role}`}
-            </span>
+            <Avatar>
+              <AvatarFallback className="bg-purple-100 text-purple-700">
+                {getInitials(participant.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="font-medium">{participant.name}</span>
+              {participant.role && (
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {participant.role}
+                </span>
+              )}
+            </div>
           </motion.div>
         ))}
       </div>
