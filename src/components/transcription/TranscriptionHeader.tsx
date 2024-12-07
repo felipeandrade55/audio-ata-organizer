@@ -26,15 +26,18 @@ export const TranscriptionHeader = ({
 
   return (
     <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="gap-2"
-        onClick={handleBack}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar
-      </Button>
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+        <h2 className="text-lg font-semibold">Ata da Reunião</h2>
+      </div>
       <SettingsMenu />
     </div>
   );
