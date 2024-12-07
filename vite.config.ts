@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
+          datepicker: ['react-day-picker', 'date-fns'],
         },
       },
     },
