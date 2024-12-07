@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, RotateCw } from "lucide-react";
+import { Play, RotateCw, Brain, Clock, FileAudio } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteTranscriptionsDialog } from "./DeleteTranscriptionsDialog";
+import { formatTime } from "@/lib/utils";
 
 interface TranscriptionRecord {
   id: string;
@@ -17,12 +18,23 @@ interface TranscriptionRecord {
   error_message?: string;
   retry_count: number;
   size?: number;
+  duration?: string;
+  ai_processed?: boolean;
+  transcription_text?: string;
+  sentiment_analysis?: any;
+  key_moments?: any;
 }
 
 const formatFileSize = (bytes?: number): string => {
   if (!bytes) return "Tamanho desconhecido";
   const mb = bytes / (1024 * 1024);
   return `${mb.toFixed(2)} MB`;
+};
+
+const getAiStatus = (record: TranscriptionRecord) => {
+  if (!record.transcription_text) return "Não processado";
+  if (record.sentiment_analysis || record.key_moments) return "Análise completa";
+  return "Transcrição completa";
 };
 
 export const RecordingHistory = () => {
@@ -159,9 +171,26 @@ export const RecordingHistory = () => {
                           ? "Concluído"
                           : "Processando"}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatFileSize(recording.size)}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <FileAudio className="h-3 w-3" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatFileSize(recording.size)}
+                        </span>
+                      </div>
+                      {recording.duration && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {recording.duration}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <Brain className="h-3 w-3" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {getAiStatus(recording)}
+                        </span>
+                      </div>
                     </div>
                     {recording.error_message && (
                       <p className="text-sm text-red-600 dark:text-red-400 mt-1 truncate">
