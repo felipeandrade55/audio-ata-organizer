@@ -7,6 +7,8 @@ import { setupSystemAudio } from "@/services/audio/systemAudioService";
 import { setupSpeechRecognition } from "@/services/audio/speechRecognitionService";
 import { validateApiKey, setupMicrophoneStream } from "@/services/audio/recordingSetupService";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
+
 interface UseAudioRecordingProps {
   onDataAvailable: (data: BlobPart) => void;
   transcriptionService: 'openai' | 'google';
@@ -26,6 +28,8 @@ export const useAudioRecording = ({
   const audioPreprocessorRef = useRef<ReturnType<typeof createAudioPreprocessor> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+  const currentSizeRef = useRef<number>(0);
 
   const handleBackgroundNoise = useCallback((isNoisy: boolean) => {
     if (isNoisy) {
@@ -64,17 +68,37 @@ export const useAudioRecording = ({
       }
 
       const processedStream = await audioPreprocessorRef.current.processAudioStream(finalStream);
-      const recorder = new MediaRecorder(processedStream);
-      const recognition = setupSpeechRecognition();
+      const recorder = new MediaRecorder(processedStream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000 // Compress audio to 128kbps
+      });
+      
+      audioChunksRef.current = [];
+      currentSizeRef.current = 0;
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+          currentSizeRef.current += event.data.size;
+
+          if (currentSizeRef.current > MAX_FILE_SIZE) {
+            stopRecording();
+            toast({
+              title: "Limite de tamanho excedido",
+              description: "A gravação foi interrompida pois excedeu o limite de 10MB. Por favor, faça gravações mais curtas.",
+              variant: "destructive",
+            });
+            return;
+          }
+
           onDataAvailable(event.data);
         }
       };
 
       recorder.start(1000);
       mediaRecorderRef.current = recorder;
+      
+      const recognition = setupSpeechRecognition();
       speechRecognitionRef.current = recognition;
       recognition.start();
 
@@ -111,6 +135,8 @@ export const useAudioRecording = ({
       }
       mediaRecorderRef.current = null;
       speechRecognitionRef.current = null;
+      audioChunksRef.current = [];
+      currentSizeRef.current = 0;
     }
   }, []);
 
